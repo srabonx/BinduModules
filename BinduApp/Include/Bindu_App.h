@@ -1,5 +1,6 @@
 #pragma once
 
+
 namespace BINDU
 {
 	class BinduApp
@@ -13,9 +14,13 @@ namespace BINDU
 		virtual void Run();
 		virtual bool OnDestroy();
 
+		virtual bool CalculateFrameStats(int& fps, float& mspf, float totalTime);	// Returns fps = frames per second, mspf = milliseconds per frame
+
 		// Accessor/ Mutator functions
 
 		inline bool isPaused() { return m_appPaused; }
+
+		
 
 	protected:
 

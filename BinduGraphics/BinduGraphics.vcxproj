@@ -138,6 +138,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Include\Bindu_Graphics.h" />
+    <ClInclude Include="Include\d3dx12.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\Bindu_Graphics.cpp" />

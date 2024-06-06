@@ -20,9 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Bindu_Util.h" />
+    <ClInclude Include="Include\Timer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\Bindu_Util.cpp" />
+    <ClCompile Include="Src\Timer.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

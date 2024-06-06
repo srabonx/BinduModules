@@ -24,12 +24,9 @@ int BINDU::Win32Application::Run(BinduApp* pApp, BINDU::Window* pWindow, int nCm
 		}
 		else
 		{
-			if (!pApp->isPaused())
-			{
-				pApp->Run();
-			}
-			else
-				Sleep(100);
+
+			pApp->Run();
+
 		}
 	}
 

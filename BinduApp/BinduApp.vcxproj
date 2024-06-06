@@ -74,13 +74,13 @@
     <OutDir>$(ProjectDir)Lib\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Lib\$(Platform)\$(Configuration)\</IntDir>
     <IncludePath>$(SolutionDir)\BinduUtility\Include;$(SolutionDir)\BinduWindow\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)BinduWindow\Lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)BinduUtility\Lib\$(Platform)\$(Configuration);$(SolutionDir)BinduWindow\Lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(ProjectDir)Lib\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Lib\$(Platform)\$(Configuration)\</IntDir>
     <IncludePath>$(SolutionDir)\BinduUtility\Include;$(SolutionDir)\BinduWindow\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)BinduWindow\Lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)BinduUtility\Lib\$(Platform)\$(Configuration);$(SolutionDir)BinduWindow\Lib\$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

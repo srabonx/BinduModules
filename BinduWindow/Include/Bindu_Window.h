@@ -33,6 +33,10 @@ namespace BINDU
 
 		static Window* GetWindow() { return m_window; }
 
+		inline int	GetAspectRatio() { return m_windowWidth / m_windowHeight; }
+
+		inline void SetWindowTitle(const std::wstring& title) { SetWindowTextW(m_windowHandle, title.c_str()); }
+
 	private:
 		static LRESULT CALLBACK WindowMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

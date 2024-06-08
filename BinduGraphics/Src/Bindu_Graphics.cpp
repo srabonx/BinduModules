@@ -85,6 +85,10 @@ void BINDU::Graphics::InitDirect3D()
 
 	D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE parameterType = D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE::D3D12_DEBUG_COMMAND_LIST_PARAMETER_GPU_BASED_VALIDATION_SETTINGS;
 	DX::ThrowIfFailed(debugCmdList->GetDebugParameter(parameterType, &parameterType, sizeof(parameterType)));
+
+
+	// Initial resize
+	this->OnResize(400, 400);
 }
 
 void BINDU::Graphics::FlushCommandQueue()

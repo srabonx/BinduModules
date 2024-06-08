@@ -37,6 +37,11 @@ namespace BINDU
 
 		inline void SetWindowTitle(const std::wstring& title) { SetWindowTextW(m_windowHandle, title.c_str()); }
 
+		inline HWND* GetWindowHandle() { return &m_windowHandle; }
+
+		inline int	GetWindowHeight() const { return m_windowHeight; }
+		inline int GetWindowWidth() const { return m_windowWidth; }
+
 	private:
 		static LRESULT CALLBACK WindowMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

@@ -22,15 +22,45 @@ namespace BINDU
 		void	FlushCommandQueue();
 		void	OnResize(int width, int height);
 
-	private:
-		
-		HRESULT CheckMSAAQuality();
-
+	
 		void	LogAdapters();
+
+
+		// Getter and Setters
+
+		inline ID3D12Device* GetDevice() const { return m_d3dDevice.Get(); }
+
+		D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentBackBufferView() const;
+
+		inline ID3D12Resource* GetCurrentBackBuffer() const { return m_dxgiSwapChainBuffer[m_currentBackBuffer].Get(); }
+
+		D3D12_CPU_DESCRIPTOR_HANDLE GetDepthStencilView() const;
+
+		inline ID3D12CommandQueue* GetCommandQueue() { return m_commandQueue.Get(); }
+
+		inline ID3D12GraphicsCommandList* GetCommandList() { return m_commandList.Get(); }
+
+		inline ID3D12CommandAllocator* GetCommandAllocator() { return m_commandAlloc.Get(); }
+
+		inline D3D12_VIEWPORT* GetViewPort() { return &m_viewport; }
+
+		inline D3D12_RECT* GetScissorRect() { return &m_scissorRect; }
+
+		inline IDXGISwapChain* GetSwapChain() { return m_dxgiSwapChain.Get(); }
+
+		inline void SetCurrentBackBufferIndex(int bufferIndex) { m_currentBackBuffer = bufferIndex; }
+
+		inline int GetCurrentBackBufferIndex() const { return m_currentBackBuffer; }
+
+		inline int GetNumberOfSwapChainBuffer() const { return m_swapChainBufferCount; }
+
+	private:
 
 		void	LogAdapterOutputs(IDXGIAdapter* pAdapter);
 
 		void	LogOutputDisplayModes(IDXGIOutput* pOutput, DXGI_FORMAT backBufferFormat);
+
+		HRESULT CheckMSAAQuality();
 
 		void	CreateCommandObjects();
 
@@ -38,9 +68,6 @@ namespace BINDU
 
 		void	CreateRtvAndDsvDescriptorHeaps();
 
-		D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentBackBufferView() const;
-		D3D12_CPU_DESCRIPTOR_HANDLE GetDepthStencilView() const;
-		
 	private:
 
 		// Pointer to the Output Window

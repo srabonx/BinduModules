@@ -88,7 +88,7 @@ void BINDU::Graphics::InitDirect3D()
 
 
 	// Initial resize
-	this->OnResize(400, 400);
+	this->OnResize(800, 800);
 }
 
 void BINDU::Graphics::FlushCommandQueue()
@@ -166,7 +166,7 @@ void BINDU::Graphics::OnResize(int width, int height)
 	
 
 	D3D12_CLEAR_VALUE	optClear;
-	optClear.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;		// Depth stencil format
+	optClear.Format = m_depthStencilFormat;		// Depth stencil format
 	optClear.DepthStencil.Depth = 1.0f;
 	optClear.DepthStencil.Stencil = 0;
 

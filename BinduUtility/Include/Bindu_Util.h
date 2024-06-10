@@ -50,7 +50,14 @@ namespace DX
 		if (FAILED(hr))
 			throw DxException(hr, __func__, __FILE__, __LINE__);
 	}
-
+//#ifndef ThrowIfFailed
+//#define ThrowIfFailed(x)																\
+//{																						\
+//		HRESULT hr__ = (x);																\
+//		if (FAILED(hr__)) { throw DxException(hr__, L#x, __FILE__, __LINE__); }	\
+//}
+//#endif
+ 
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE(p) { if(p) { p->Release(); p = nullptr; } }
 #endif

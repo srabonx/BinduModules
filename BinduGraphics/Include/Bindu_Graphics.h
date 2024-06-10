@@ -5,6 +5,8 @@
 #include <wrl.h>
 
 #include <Bindu_Util.h>
+#include "D3D12Util.h"
+#include "UploadBuffer.h"
 
 #pragma comment (lib,"d3dcompiler.lib")
 #pragma comment (lib,"D3D12.lib")
@@ -54,6 +56,14 @@ namespace BINDU
 
 		inline int GetNumberOfSwapChainBuffer() const { return m_swapChainBufferCount; }
 
+		inline DXGI_FORMAT GetDepthStencilFormat() const { return m_depthStencilFormat; }
+
+		inline DXGI_FORMAT GetBackBufferFormat() const { return m_backBufferFormat; }
+
+		inline bool Get4XMSAAState() const { return m_4xMSAAState; }
+
+		inline UINT Get4XMSAAQuality() const { return m_4xMSAAQuality; }
+
 	private:
 
 		void	LogAdapterOutputs(IDXGIAdapter* pAdapter);
@@ -102,6 +112,7 @@ namespace BINDU
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_dxgiSwapChainBuffer[m_swapChainBufferCount]{ nullptr };
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_depthStencilBuffer{ nullptr };
 		DXGI_FORMAT m_backBufferFormat{ DXGI_FORMAT_R8G8B8A8_UNORM };
+		DXGI_FORMAT m_depthStencilFormat{ DXGI_FORMAT_D24_UNORM_S8_UINT };
 		DXGI_MODE_DESC	m_dxgiModeDesc = { 0 };
 
 		D3D12_VIEWPORT	m_viewport;

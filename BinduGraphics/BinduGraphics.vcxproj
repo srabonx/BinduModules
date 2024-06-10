@@ -137,8 +137,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Include\D3D12Util.h" />
     <ClInclude Include="Include\Bindu_Graphics.h" />
     <ClInclude Include="Include\d3dx12.h" />
+    <ClInclude Include="Include\UploadBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\Bindu_Graphics.cpp" />

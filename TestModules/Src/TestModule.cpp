@@ -4,14 +4,20 @@
 #include <DirectXColors.h>
 #include <array>
 
-DemoClass::DemoClass(BINDU::Window* window) : m_window(window)
+
+DemoClass::DemoClass(HINSTANCE hInstance) : BINDU::Win32Window(hInstance)
+{
+	m_timer.Reset();
+}
+
+DemoClass::DemoClass(HINSTANCE hInstance, BINDU::BINDU_WINDOW_DESC windowDesc) : BINDU::Win32Window(hInstance, windowDesc)
 {
 	m_timer.Reset();
 }
 
 DemoClass::~DemoClass()
 {
-	
+
 }
 
 bool DemoClass::OnInit()
@@ -25,6 +31,7 @@ bool DemoClass::OnInit()
 	m_graphics = std::make_unique<BINDU::Graphics>(m_window->GetWindowHandle(), desc);
 
 	m_graphics->InitDirect3D();
+	m_graphics->OnResize(800, 600);
 
 	DX::ThrowIfFailed(m_graphics->GetCommandList()->Reset(m_graphics->GetCommandAllocator(), nullptr));
 
@@ -45,6 +52,9 @@ bool DemoClass::OnInit()
 
 	m_graphics->FlushCommandQueue();
 
+	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * 3.1415926535f, this->GetAspectRatio(), 1.0f, 1000.0f);
+	XMStoreFloat4x4(&m_proj, P);
+
 	return false;
 }
 
@@ -61,7 +71,7 @@ void DemoClass::Run()
 	{
 		std::wstring text = L"FPS: " + std::to_wstring(fps) + L" MSPF: " + std::to_wstring(mspf) + L" TOTAL TIME: " + std::to_wstring(totalTime);
 
-		m_window->SetWindowTitle(text);
+		this->SetWindowTitle(text);
 	}
 
 	this->Update();
@@ -73,8 +83,7 @@ void DemoClass::Run()
 
 void DemoClass::Update()
 {
-	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * 3.1415926535f, this->GetWindow()->GetAspectRatio(), 1.0f, 1000.0f);
-	XMStoreFloat4x4(&m_proj, P);
+	
 
 	float x = m_radius * sinf(m_phi) * cosf(m_theta);
 	float z = m_radius * sinf(m_phi) * sinf(m_theta);
@@ -157,6 +166,102 @@ void DemoClass::Render()
 
 	m_graphics->FlushCommandQueue();
 	
+}
+
+LRESULT DemoClass::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+
+	switch (msg)
+	{
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+
+	case WM_ACTIVATE:
+
+		if (LOWORD(wParam) == WA_INACTIVE)
+		{
+			m_appPaused = true;
+			m_timer.Stop();
+		}
+		else
+		{
+			m_appPaused = false;
+			m_timer.Start();
+		}
+
+		break;
+
+	case WM_ENTERSIZEMOVE:
+		m_appPaused = true;
+		m_resizing = true;
+		m_timer.Stop();
+		break;
+
+	case WM_EXITSIZEMOVE:
+		m_appPaused = false;
+		m_resizing = false;
+		m_timer.Start();
+		this->OnResize(m_windowWidth, m_windowHeight);
+		break;
+
+	case WM_SIZE:
+
+		m_windowWidth = LOWORD(lParam);
+		m_windowHeight = HIWORD(lParam);
+
+		if (m_graphics)
+		{
+			if (wParam == SIZE_MINIMIZED)
+			{
+				m_appPaused = true;
+				m_minimized = true;
+				m_maximized = false;
+			}
+			else if (wParam == SIZE_MAXIMIZED)
+			{
+				m_appPaused = false;
+				m_minimized = false;
+				m_maximized = true;
+				this->OnResize(m_windowWidth, m_windowHeight);
+			}
+			else if (wParam == SIZE_RESTORED)
+			{
+				if (m_minimized)
+				{
+					m_appPaused = false;
+					m_minimized = false;
+					this->OnResize(m_windowWidth, m_windowHeight);
+				}
+				else if (m_maximized)
+				{
+					m_appPaused = false;
+					m_maximized = false;
+					this->OnResize(m_windowWidth, m_windowHeight);
+				}
+				else if (m_resizing)
+				{
+
+				}
+				else
+					this->OnResize(m_windowWidth, m_windowHeight);
+			}
+
+		}
+
+		break;
+
+	case WM_GETMINMAXINFO:
+		((MINMAXINFO*)lParam)->ptMinTrackSize.x = 200;
+		((MINMAXINFO*)lParam)->ptMinTrackSize.y = 200;
+		break;
+
+
+	default:
+		break;
+	}
+
+	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 void DemoClass::CreateDescriptorHeaps()
@@ -358,6 +463,13 @@ void DemoClass::CreatePSO()
 	DX::ThrowIfFailed(m_graphics->GetDevice()->CreateGraphicsPipelineState(&psd, IID_PPV_ARGS(m_pso.GetAddressOf())));
 }
 
+void DemoClass::OnResize(int width, int height)
+{
+	m_graphics->OnResize(width, height);
+	
+	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * 3.1415926535f, this->GetAspectRatio(), 1.0f, 1000.0f);
+	XMStoreFloat4x4(&m_proj, P);
+}
 
 
 
@@ -366,12 +478,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
 #if defined(DEBUG) || defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
-	BINDU::BINDU_WINDOW_DESC wndDesc = { "TestWindow",800,800 };
-	BINDU::Window window(hInstance, wndDesc);
+	BINDU::BINDU_WINDOW_DESC wndDesc = { "TestWindow",800,600 };
+	/*BINDU::Win32Window window(hInstance, wndDesc);*/
 
-	BINDU::BinduApp* demoClass = new DemoClass(&window);
+	BINDU::BinduApp* demoClass = new DemoClass(hInstance, wndDesc);
 
-	int n = BINDU::Win32Application::Run(demoClass, &window, cmdShow);
+	DemoClass* pDemoClass = reinterpret_cast<DemoClass*>(demoClass);
+
+	int n = BINDU::Win32Application::Run(demoClass, pDemoClass->GetWindow(), cmdShow);
 	
 	_CrtDumpMemoryLeaks();
 

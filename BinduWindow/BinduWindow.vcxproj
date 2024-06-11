@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Src\Bindu_Window.cpp" />
+    <ClCompile Include="Src\Win32Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Include\Bindu_Window.h" />
+    <ClInclude Include="Include\Win32Window.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

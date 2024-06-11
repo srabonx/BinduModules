@@ -1,6 +1,6 @@
 #include "../Include/Win32Application.h"
 
-int BINDU::Win32Application::Run(BinduApp* pApp, BINDU::Window* pWindow, int nCmdShow)
+int BINDU::Win32Application::Run(BinduApp* pApp, BINDU::Win32Window* pWindow, int nCmdShow)
 {
 
 	pWindow->CreateMainWindow();
@@ -24,15 +24,16 @@ int BINDU::Win32Application::Run(BinduApp* pApp, BINDU::Window* pWindow, int nCm
 		}
 		else
 		{
-
-			pApp->Run();
-
+			if (!pApp->isPaused())
+				pApp->Run();
+			else
+				Sleep(100);
 		}
 	}
 
 	pApp->OnDestroy();
 
 	delete pApp;
-
+	
 	return (int)msg.wParam;
 }

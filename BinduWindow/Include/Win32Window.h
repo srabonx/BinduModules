@@ -17,23 +17,23 @@ namespace BINDU
 		int			windowHeight{ 200 };
 	};
 
-	class Window
+	class Win32Window
 	{
 	public:
-		Window(HINSTANCE hInstance);
-		Window(HINSTANCE hInstance, const BINDU_WINDOW_DESC windowDesc);
-		Window(const Window& window) = delete;
-		Window& operator= (const Window& window) = delete;
-		virtual ~Window();
+		Win32Window(HINSTANCE hInstance);
+		Win32Window(HINSTANCE hInstance, const BINDU_WINDOW_DESC windowDesc);
+		Win32Window(const Win32Window& window) = delete;
+		Win32Window& operator= (const Win32Window& window) = delete;
+		virtual ~Win32Window();
 
 		bool CreateMainWindow();
 
 		virtual LRESULT MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 
-		static Window* GetWindow() { return m_window; }
+		static Win32Window* GetWindow() { return m_window; }
 
-		inline int	GetAspectRatio() { return m_windowWidth / m_windowHeight; }
+		inline float   GetAspectRatio() { return static_cast<float>(m_windowWidth) / m_windowHeight; }
 
 		inline void SetWindowTitle(const std::wstring& title) { SetWindowTextW(m_windowHandle, title.c_str()); }
 
@@ -46,7 +46,7 @@ namespace BINDU
 		static LRESULT CALLBACK WindowMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	protected:
-		static Window* m_window;
+		static Win32Window* m_window;
 		HWND		m_windowHandle{ nullptr };
 		HINSTANCE   m_applicationInstanceHandle{ nullptr };
 

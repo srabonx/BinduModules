@@ -15,12 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Src\Bindu_Window.cpp">
+    <ClCompile Include="Src\Win32Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Include\Bindu_Window.h">
+    <ClInclude Include="Include\Win32Window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

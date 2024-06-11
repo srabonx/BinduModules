@@ -88,7 +88,7 @@ void BINDU::Graphics::InitDirect3D()
 
 
 	// Initial resize
-	this->OnResize(800, 800);
+	this->OnResize(800, 600);
 }
 
 void BINDU::Graphics::FlushCommandQueue()

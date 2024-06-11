@@ -21,6 +21,7 @@ bool BINDU::BinduApp::OnInit()
 
 void BINDU::BinduApp::Run()
 {
+
 	Update();
 	Render();
 }

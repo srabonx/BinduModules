@@ -80,7 +80,7 @@ namespace BINDU
 
 	private:
 
-		// Pointer to the Output Window
+		// Pointer to the Output Win32Window
 		HWND* m_hwndOutputWindow{ nullptr };
 
 		// Pipeline objects

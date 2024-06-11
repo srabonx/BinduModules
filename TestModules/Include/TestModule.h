@@ -1,7 +1,7 @@
 #pragma once
 #include <Win32Application.h>
 #include <Timer.h>
-#include <Bindu_Window.h>
+#include <Win32Window.h>
 #include <Bindu_Graphics.h>
 #include <DirectXMath.h>
 
@@ -17,16 +17,19 @@ struct ObjectConstants
 	DirectX::XMFLOAT4X4 WorldviewMatrix;
 };
 
-class DemoClass : public BINDU::BinduApp
+class DemoClass : public BINDU::BinduApp, public BINDU::Win32Window
 {
 public:
-	DemoClass(BINDU::Window* window);
+	DemoClass(HINSTANCE hInstance);
+	DemoClass(HINSTANCE hInstance, BINDU::BINDU_WINDOW_DESC windowDesc);
 	~DemoClass() override;
+
 
 	bool OnInit() override;
 	void Run() override;
 	void Update() override;
 	void Render() override;
+
 
 private:
 
@@ -42,12 +45,15 @@ private:
 
 	void CreatePSO();
 
-	inline BINDU::Window* GetWindow() { return m_window; }
+	void OnResize(int width, int height);
+
+	LRESULT MsgProc(HWND hWnd, UINT msg, WPARAM wPARAM, LPARAM lPARAM) override;
+
 
 private:
 	GameTimer m_timer;
 	std::unique_ptr<BINDU::Graphics> m_graphics{ nullptr };
-	BINDU::Window* m_window{ nullptr };
+	
 
 	Microsoft::WRL::ComPtr<ID3D12PipelineState>		m_pso{ nullptr };
 

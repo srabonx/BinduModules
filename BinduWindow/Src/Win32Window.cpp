@@ -1,19 +1,19 @@
-#include "../Include/Bindu_Window.h"
+#include "../Include/Win32Window.h"
 
 //LRESULT CALLBACK WindowMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 //{
-//	return BINDU::Window::GetWindow()->MsgProc(hWnd, msg, wParam, lParam);
+//	return BINDU::Win32Window::GetWindow()->MsgProc(hWnd, msg, wParam, lParam);
 //}
 
-BINDU::Window* BINDU::Window::m_window = nullptr;
+BINDU::Win32Window* BINDU::Win32Window::m_window = nullptr;
 
-BINDU::Window::Window(HINSTANCE hInstance) : m_applicationInstanceHandle(hInstance)
+BINDU::Win32Window::Win32Window(HINSTANCE hInstance) : m_applicationInstanceHandle(hInstance)
 {
 	assert(m_window == nullptr);
 	m_window = this;
 }
 
-BINDU::Window::Window(HINSTANCE hInstance, const BINDU_WINDOW_DESC windowDesc) : m_applicationInstanceHandle(hInstance),
+BINDU::Win32Window::Win32Window(HINSTANCE hInstance, const BINDU_WINDOW_DESC windowDesc) : m_applicationInstanceHandle(hInstance),
 															m_windowTitle(windowDesc.windowTitle),
 															m_windowWidth(windowDesc.windowWidth),
 															m_windowHeight(windowDesc.windowHeight)
@@ -22,11 +22,11 @@ BINDU::Window::Window(HINSTANCE hInstance, const BINDU_WINDOW_DESC windowDesc) :
 	m_window = this;
 }
 
-BINDU::Window::~Window()
+BINDU::Win32Window::~Win32Window()
 {
 }
 
-bool BINDU::Window::CreateMainWindow()
+bool BINDU::Win32Window::CreateMainWindow()
 {
 	
 	WNDCLASSEX wndClass = { 0 };
@@ -82,7 +82,7 @@ bool BINDU::Window::CreateMainWindow()
 
 
 
-LRESULT BINDU::Window::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT BINDU::Win32Window::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
 	{
@@ -94,8 +94,8 @@ LRESULT BINDU::Window::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-LRESULT BINDU::Window::WindowMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT BINDU::Win32Window::WindowMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	return BINDU::Window::GetWindow()->MsgProc(hWnd, msg, wParam, lParam);
+	return BINDU::Win32Window::GetWindow()->MsgProc(hWnd, msg, wParam, lParam);
 }
 

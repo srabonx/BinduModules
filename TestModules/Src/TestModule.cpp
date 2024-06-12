@@ -3,6 +3,8 @@
 #include <d3dx12.h>
 #include <DirectXColors.h>
 #include <array>
+#include <Win32Input.h>
+#include <MathHelper.h>
 
 
 DemoClass::DemoClass(HINSTANCE hInstance) : BINDU::Win32Window(hInstance)
@@ -83,7 +85,51 @@ void DemoClass::Run()
 
 void DemoClass::Update()
 {
-	
+
+	//if (BINDU::Win32Input::IsMouseButtonPressed(BINDU::MouseButton::LEFT))
+	//{
+
+	//	m_lastMousePos.x = BINDU::Win32Input::GetMousePosition().currX;
+	//	m_lastMousePos.y = BINDU::Win32Input::GetMousePosition().currY;
+	//}
+
+	if (BINDU::Win32Input::IsMouseMoved(BINDU::MouseButton::LEFT))
+	{
+
+		SetCapture(m_windowHandle);
+		float dx = XMConvertToRadians(0.15f * static_cast<float>(BINDU::Win32Input::GetMousePosition().currX - m_lastMousePos.x));
+		float dy = XMConvertToRadians(0.15f * static_cast<float>(BINDU::Win32Input::GetMousePosition().currY - m_lastMousePos.y));
+
+		m_theta += dx;
+		m_phi += dy;
+
+		m_phi = MathHelper::Clamp(m_phi, 0.1f, 3.1419f - 0.1f);
+		m_lastMousePos.x = BINDU::Win32Input::GetMousePosition().currX;
+		m_lastMousePos.y = BINDU::Win32Input::GetMousePosition().currY;
+		
+	}
+	else if (BINDU::Win32Input::IsMouseMoved(BINDU::MouseButton::RIGHT))
+	{
+		SetCapture(m_windowHandle);
+		float dx = 0.005f * static_cast<float>(BINDU::Win32Input::GetMousePosition().currX - m_lastMousePos.x);
+		float dy = 0.005f * static_cast<float>(BINDU::Win32Input::GetMousePosition().currY - m_lastMousePos.y);
+
+		// Update the camera radius based on input.
+		m_radius += dx - dy;
+
+		// Restrict the radius.
+		m_radius = MathHelper::Clamp(m_radius, 3.0f, 15.0f);
+
+		m_lastMousePos.x = BINDU::Win32Input::GetMousePosition().currX;
+		m_lastMousePos.y = BINDU::Win32Input::GetMousePosition().currY;
+	}
+	else if (BINDU::Win32Input::IsMouseButtonReleased(BINDU::MouseButton::LEFT))
+	{
+		ReleaseCapture();
+		m_lastMousePos.x = BINDU::Win32Input::GetMousePosition().currX;
+		m_lastMousePos.y = BINDU::Win32Input::GetMousePosition().currY;
+	}
+
 
 	float x = m_radius * sinf(m_phi) * cosf(m_theta);
 	float z = m_radius * sinf(m_phi) * sinf(m_theta);
@@ -255,11 +301,12 @@ LRESULT DemoClass::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		((MINMAXINFO*)lParam)->ptMinTrackSize.x = 200;
 		((MINMAXINFO*)lParam)->ptMinTrackSize.y = 200;
 		break;
-
-
+	
 	default:
 		break;
 	}
+
+	BINDU::Win32Input::MsgProc(hWnd, msg, wParam, lParam);
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
@@ -335,10 +382,21 @@ void DemoClass::CreateInputLayoutAndShaders()
 	m_vsByteCode = D3DUtil::CompileShader("C:/Users/letsd/visual studio workspace/BinduModules/TestModules/Shaders/color.hlsl", nullptr, "VS", "vs_5_0");
 	m_psByteCode = D3DUtil::CompileShader("C:/Users/letsd/visual studio workspace/BinduModules/TestModules/Shaders/color.hlsl", nullptr, "PS", "ps_5_0");
 
+	
 	m_inputLayout =
 	{
 		{"POSITION",0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
 		{"COLOR",0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0}
+	};
+
+	m_inputLayout2 =
+	{
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"TANJENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT,0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{"TEX0", 0 , DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"TEX1", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+		{"COLOR", 0 , DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 52, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
 	};
 }
 

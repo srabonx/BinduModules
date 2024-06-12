@@ -18,20 +18,11 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Include\Bindu_Util.h" />
-    <ClInclude Include="Include\MathHelper.h" />
-    <ClInclude Include="Include\Timer.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Src\Bindu_Util.cpp" />
-    <ClCompile Include="Src\Timer.cpp" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{5857384d-7605-44bf-a339-84448a7ddf67}</ProjectGuid>
-    <RootNamespace>BinduUtility</RootNamespace>
+    <ProjectGuid>{f0387831-6f8a-474b-bf25-4f243ecc6d58}</ProjectGuid>
+    <RootNamespace>BinduInput</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -82,10 +73,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(ProjectDir)Lib\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Lib\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(SolutionDir)BinduWindow\Include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(ProjectDir)Lib\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)Lib\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(SolutionDir)BinduWindow\Include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -145,6 +138,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="Include\Win32Input.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Src\Win32Input.cpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

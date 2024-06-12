@@ -12,6 +12,16 @@ struct Vertex
 	XMFLOAT4 color;
 };
 
+struct Vertex2
+{
+	XMFLOAT3 Pos;
+	XMFLOAT3 Tanjent;
+	XMFLOAT3 Normal;
+	XMFLOAT2 Tex0;
+	XMFLOAT3 Tex1;
+	XMFLOAT4 Color;
+};
+
 struct ObjectConstants
 {
 	DirectX::XMFLOAT4X4 WorldviewMatrix;
@@ -68,6 +78,8 @@ private:
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC>			m_inputLayout;
 
+	std::vector<D3D12_INPUT_ELEMENT_DESC>			m_inputLayout2;
+
 	std::unique_ptr<MeshGeometry>					m_boxGeo{ nullptr };
 
 	XMFLOAT4X4 m_world = XMFLOAT4X4(
@@ -91,5 +103,7 @@ private:
 	float m_theta = 1.5f * XM_PI;
 	float m_phi = XM_PIDIV4;
 	float m_radius = 5.0f;
+
+	POINT m_lastMousePos;
 
 };

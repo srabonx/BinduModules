@@ -22,9 +22,22 @@ struct Vertex2
 	XMFLOAT4 Color;
 };
 
+struct VPosData
+{
+	XMFLOAT3 Pos;
+};
+
+struct VColorData
+{
+	XMFLOAT4 Color;
+};
+
+
 struct ObjectConstants
 {
 	DirectX::XMFLOAT4X4 WorldviewMatrix;
+	XMFLOAT4	PulseColor;
+	double	GTime;
 };
 
 class DemoClass : public BINDU::BinduApp, public BINDU::Win32Window
@@ -39,7 +52,7 @@ public:
 	void Run() override;
 	void Update() override;
 	void Render() override;
-
+	
 
 private:
 
@@ -80,7 +93,20 @@ private:
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC>			m_inputLayout2;
 
+	std::vector<D3D12_INPUT_ELEMENT_DESC>			m_inputLayout3;
+
+	Microsoft::WRL::ComPtr<ID3D12Resource>			m_vPosBuffer{ nullptr };
+	Microsoft::WRL::ComPtr<ID3D12Resource>			m_vColorBuffer{ nullptr };
+
+	Microsoft::WRL::ComPtr<ID3D12Resource>			m_vPosBufferUploader{ nullptr };
+	Microsoft::WRL::ComPtr<ID3D12Resource>			m_vColorBufferUploader{ nullptr };
+
+	D3D12_VERTEX_BUFFER_VIEW						m_vBufferView[2];
+
 	std::unique_ptr<MeshGeometry>					m_boxGeo{ nullptr };
+	std::unique_ptr<MeshGeometry>					m_pyramidGeo{ nullptr };
+
+	std::unique_ptr<MeshGeometry>					m_geometry{ nullptr };
 
 	XMFLOAT4X4 m_world = XMFLOAT4X4(
 		1.0f, 0.0f, 0.0f, 0.0f,
@@ -105,5 +131,7 @@ private:
 	float m_radius = 5.0f;
 
 	POINT m_lastMousePos;
+
+	ObjectConstants	m_objectConstants;
 
 };

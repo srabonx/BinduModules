@@ -27,6 +27,26 @@ inline std::string WstringToString(const std::wstring& wstr)
 }
 #pragma warning(pop)
 
+
+inline std::string RelativeResourcePath(const char* filepath = nullptr)
+{
+	std::string ResourcePath(MAX_PATH, '\0');
+
+	GetModuleFileNameA(nullptr, const_cast<LPSTR>(ResourcePath.data()), MAX_PATH);
+
+	std::string delimeter = "TestModules";
+
+	size_t t = ResourcePath.find(delimeter);
+	ResourcePath = ResourcePath.substr(0, t + delimeter.size() + 1);
+
+	if (filepath)
+		ResourcePath += filepath;
+
+	return ResourcePath;
+}
+
+
+
 namespace DX
 {
 
@@ -62,4 +82,6 @@ namespace DX
 #define SAFE_RELEASE(p) { if(p) { p->Release(); p = nullptr; } }
 #endif
 }
+
+
 

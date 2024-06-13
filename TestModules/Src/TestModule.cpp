@@ -5,6 +5,7 @@
 #include <array>
 #include <Win32Input.h>
 #include <MathHelper.h>
+#include <fstream>
 
 
 DemoClass::DemoClass(HINSTANCE hInstance) : BINDU::Win32Window(hInstance)
@@ -56,7 +57,7 @@ bool DemoClass::OnInit()
 
 	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * 3.1415926535f, this->GetAspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&m_proj, P);
-
+	m_objectConstants.PulseColor = XMFLOAT4(DirectX::Colors::Red);
 	return false;
 }
 
@@ -130,6 +131,7 @@ void DemoClass::Update()
 		m_lastMousePos.y = BINDU::Win32Input::GetMousePosition().currY;
 	}
 
+	static float angle = 0.f;
 
 	float x = m_radius * sinf(m_phi) * cosf(m_theta);
 	float z = m_radius * sinf(m_phi) * sinf(m_theta);
@@ -143,19 +145,30 @@ void DemoClass::Update()
 	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
 	XMStoreFloat4x4(&m_view, view);
 
+	
+
 	XMMATRIX world = XMLoadFloat4x4(&m_world);
 	XMMATRIX proj = XMLoadFloat4x4(&m_proj);
 	XMMATRIX worldViewProj = world * view * proj;
 
 	// Update the constant buffer with the latest world view proj matrix
 
+	
 	ObjectConstants objConstants;
 	XMStoreFloat4x4(&objConstants.WorldviewMatrix, XMMatrixTranspose(worldViewProj));
+	objConstants.GTime = m_timer.TotalTime();
+	objConstants.PulseColor = XMFLOAT4(Colors::Red);
 
 	m_objectCB->CopyData(0, objConstants);
 
-	
-
+	//world = XMLoadFloat4x4(&m_world) * XMMatrixTranslation(angle += 0.001f, 0, 0);
+	//
+	//worldViewProj = world * view * proj;
+	//XMStoreFloat4x4(&m_objectConstants.WorldviewMatrix, XMMatrixTranspose(worldViewProj));
+	//m_objectCB->CopyData(1, m_objectConstants);
+	//
+	//if (angle > 5)
+	//	angle = -5;
 }
 
 void DemoClass::Render()
@@ -163,6 +176,7 @@ void DemoClass::Render()
 	DX::ThrowIfFailed(m_graphics->GetCommandAllocator()->Reset());
 
 	m_graphics->GetCommandList()->Reset(m_graphics->GetCommandAllocator(), m_pso.Get());
+
 
 	m_graphics->GetCommandList()->RSSetViewports(1, m_graphics->GetViewPort());
 	m_graphics->GetCommandList()->RSSetScissorRects(1, m_graphics->GetScissorRect());
@@ -184,15 +198,29 @@ void DemoClass::Render()
 	m_graphics->GetCommandList()->SetGraphicsRootSignature(m_rootSig.Get());
 
 	m_graphics->GetCommandList()->IASetVertexBuffers(0, 1, &m_boxGeo->GetVertexBufferView());
+//	m_graphics->GetCommandList()->IASetVertexBuffers(0, 1, &m_vBufferView[0]);
+//	m_graphics->GetCommandList()->IASetVertexBuffers(1, 1, &m_vBufferView[1]);
 	m_graphics->GetCommandList()->IASetIndexBuffer(&m_boxGeo->GetIndexBufferView());
-	m_graphics->GetCommandList()->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_graphics->GetCommandList()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
 
 	m_graphics->GetCommandList()->SetGraphicsRootDescriptorTable(0, m_cbHeap->GetGPUDescriptorHandleForHeapStart());
 
-	m_graphics->GetCommandList()->DrawIndexedInstanced(m_boxGeo->DrawArgs["box"].IndexCount,
-		1, 0, 0, 0);
+	m_graphics->GetCommandList()->DrawIndexedInstanced(m_boxGeo->DrawArgs["box"].IndexCount, 1, 0, 0, 0);
+//	m_graphics->GetCommandList()->DrawIndexedInstanced(m_geometry->DrawArgs["box"].IndexCount,
+//		1, m_geometry->DrawArgs["box"].StartIndexLocation, m_geometry->DrawArgs["box"].BaseVertexLocation, 0);
 
+//	boxCBIndex = 1;
+//	objCBaddress += boxCBIndex * objCBByteSize;
 
+//	cbvHandle.Offset(boxCBIndex, m_graphics->GetCbvSrvUavDescriptorIncreamentSize());
+
+//	m_graphics->GetCommandList()->SetGraphicsRootDescriptorTable(0, cbvHandle);
+
+//	m_graphics->GetCommandList()->DrawIndexedInstanced(m_geometry->DrawArgs["pyramid"].IndexCount,
+//		1, m_geometry->DrawArgs["pyramid"].StartIndexLocation, m_geometry->DrawArgs["pyramid"].BaseVertexLocation, 0);
+
+	
 	m_graphics->GetCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_graphics->GetCurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
@@ -320,7 +348,7 @@ void DemoClass::CreateDescriptorHeaps()
 	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
 	m_graphics->GetDevice()->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_cbHeap));
-
+	
 }
 
 void DemoClass::CreateConstantBuffers()
@@ -329,18 +357,20 @@ void DemoClass::CreateConstantBuffers()
 
 	UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
-	D3D12_GPU_VIRTUAL_ADDRESS objCBBaddress = m_objectCB->Resource()->GetGPUVirtualAddress();
 
-	// offset to the ith constant buffer in the buffer
-	int boxCBIndex = 0;
-	objCBBaddress += boxCBIndex * objCBByteSize;
+		D3D12_GPU_VIRTUAL_ADDRESS objCBaddress = m_objectCB->Resource()->GetGPUVirtualAddress();
 
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-	cbvDesc.BufferLocation = objCBBaddress;
-	cbvDesc.SizeInBytes = objCBByteSize;
 
-	m_graphics->GetDevice()->CreateConstantBufferView(&cbvDesc, m_cbHeap->GetCPUDescriptorHandleForHeapStart());
+		// offset to the ith constant buffer in the buffer
+		int boxCBIndex = 0;
+		objCBaddress += boxCBIndex * objCBByteSize;
 
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+		cbvDesc.BufferLocation = objCBaddress;
+		cbvDesc.SizeInBytes = objCBByteSize;
+	
+		m_graphics->GetDevice()->CreateConstantBufferView(&cbvDesc, m_cbHeap->GetCPUDescriptorHandleForHeapStart());
+	
 }
 
 void DemoClass::CreateRootSignature()
@@ -379,13 +409,15 @@ void DemoClass::CreateRootSignature()
 
 void DemoClass::CreateInputLayoutAndShaders()
 {
-	m_vsByteCode = D3DUtil::CompileShader("C:/Users/letsd/visual studio workspace/BinduModules/TestModules/Shaders/color.hlsl", nullptr, "VS", "vs_5_0");
-	m_psByteCode = D3DUtil::CompileShader("C:/Users/letsd/visual studio workspace/BinduModules/TestModules/Shaders/color.hlsl", nullptr, "PS", "ps_5_0");
+	
+
+	m_vsByteCode = D3DUtil::CompileShader(RelativeResourcePath("Shaders/color.hlsl"), nullptr, "VS", "vs_5_0");
+	m_psByteCode = D3DUtil::CompileShader(RelativeResourcePath("Shaders/color.hlsl"), nullptr, "PS", "ps_5_0");
 
 	
 	m_inputLayout =
 	{
-		{"POSITION",0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+		{"POSITION",0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},	
 		{"COLOR",0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0}
 	};
 
@@ -398,6 +430,13 @@ void DemoClass::CreateInputLayoutAndShaders()
 		{"TEX1", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
 		{"COLOR", 0 , DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 52, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
 	};
+
+	m_inputLayout3 =
+	{
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+	};
+
 }
 
 // the box that will be drawn
@@ -416,20 +455,18 @@ void DemoClass::CreateBoxGeometry()
 
 	};
 
+
 	std::array<std::uint16_t, 36> indices =
 	{
 		// front face
 		0, 1, 2,
 		0, 2, 3,
-
 		// back face
 		4, 6, 5,
 		4, 7, 6,
-
 		// left face
 		4, 5, 1,
 		4, 1, 0,
-
 		// right face
 		3, 2, 6,
 		3, 6, 7,
@@ -443,6 +480,7 @@ void DemoClass::CreateBoxGeometry()
 		4, 3, 7
 
 	};
+
 
 	const UINT vbByteSize = static_cast<UINT>(vertices.size() * sizeof(Vertex));
 	const UINT ibByteSize = static_cast<UINT>(indices.size() * sizeof(std::uint16_t));
@@ -477,6 +515,200 @@ void DemoClass::CreateBoxGeometry()
 
 	m_boxGeo->DrawArgs["box"] = subMesh;
 
+
+	std::array<Vertex, 5>	pyraVertices =
+	{
+		Vertex({XMFLOAT3(-1.0f,-1.0f,-1.0f), XMFLOAT4(Colors::Green)}),
+		Vertex({XMFLOAT3(-1.0f,-1.0f,+1.0f), XMFLOAT4(Colors::Green)}),
+		Vertex({XMFLOAT3(+1.0f,-1.0f,-1.0f), XMFLOAT4(Colors::Green)}),
+		Vertex({XMFLOAT3(+1.0f,-1.0f,+1.0f), XMFLOAT4(Colors::Green)}),
+		Vertex({XMFLOAT3(0.0f,+1.0f,0.0f), XMFLOAT4(Colors::Red)}),
+
+	};
+
+	std::array<std::uint16_t, 18> pyraIndices =
+	{
+		0, 1, 2,
+		1, 3, 2,
+		1, 4, 0,
+		0, 4, 2,
+		2, 4, 3,
+		3, 4, 1
+	};
+
+	UINT pyraVByteSize = static_cast<UINT>(pyraVertices.size() * sizeof(Vertex));
+	UINT pyraIByteSize = static_cast<UINT>(pyraIndices.size() * sizeof(uint16_t));
+
+	m_pyramidGeo = std::make_unique<MeshGeometry>();
+
+	m_pyramidGeo->Name = "pyramidGeo";
+
+	DX::ThrowIfFailed(D3DCreateBlob(pyraVByteSize, &m_pyramidGeo->VertexBufferCPU));
+	RtlCopyMemory(m_pyramidGeo->VertexBufferCPU->GetBufferPointer(), pyraVertices.data(), pyraVByteSize);
+
+	DX::ThrowIfFailed(D3DCreateBlob(pyraIByteSize, &m_pyramidGeo->IndexBufferCPU));
+	RtlCopyMemory(m_pyramidGeo->IndexBufferCPU->GetBufferPointer(), pyraIndices.data(), pyraIByteSize);
+
+	m_pyramidGeo->VertexBufferGPU = D3DUtil::CreateDefaultBuffer(m_graphics->GetDevice(),
+		m_graphics->GetCommandList(), pyraVertices.data(), pyraVByteSize, m_pyramidGeo->VertexBufferUploader);
+
+	m_pyramidGeo->IndexBufferGPU = D3DUtil::CreateDefaultBuffer(m_graphics->GetDevice(),
+		m_graphics->GetCommandList(), pyraIndices.data(), pyraIByteSize, m_pyramidGeo->IndexBufferUploader);
+
+	m_pyramidGeo->VertexBufferByteSize = pyraVByteSize;
+	m_pyramidGeo->IndexBufferByteSize = pyraIByteSize;
+	m_pyramidGeo->VertexByteStride = sizeof(Vertex);
+	m_pyramidGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
+
+	subMesh.IndexCount = static_cast<UINT>(pyraIndices.size());
+	subMesh.BaseVertexLocation = 0;
+	subMesh.StartIndexLocation = 0;
+
+	m_pyramidGeo->DrawArgs["pyramid"] = subMesh;
+
+
+
+
+	std::array<Vertex, 13> geometryVertices =
+	{
+		Vertex({XMFLOAT3(-1.0f,-1.0f,-1.0f), XMFLOAT4(Colors::Red)}),
+		Vertex({XMFLOAT3(-1.0f,+1.0f,-1.0f), XMFLOAT4(Colors::Green)}),
+		Vertex({XMFLOAT3(+1.0f,+1.0f,-1.0f), XMFLOAT4(Colors::Blue)}),
+		Vertex({XMFLOAT3(+1.0f,-1.0f,-1.0f), XMFLOAT4(Colors::Yellow)}),
+		Vertex({XMFLOAT3(-1.0f,-1.0f,+1.0f), XMFLOAT4(Colors::Violet)}),
+		Vertex({XMFLOAT3(-1.0f,+1.0f,+1.0f), XMFLOAT4(Colors::Indigo)}),
+		Vertex({XMFLOAT3(+1.0f,+1.0f,+1.0f), XMFLOAT4(Colors::Orange)}),
+		Vertex({XMFLOAT3(+1.0f,-1.0f,+1.0f), XMFLOAT4(Colors::Black)}),
+
+		Vertex({XMFLOAT3(-1.0f,-1.0f,-1.0f), XMFLOAT4(Colors::Green)}),
+		Vertex({XMFLOAT3(-1.0f,-1.0f,+1.0f), XMFLOAT4(Colors::Green)}),
+		Vertex({XMFLOAT3(+1.0f,-1.0f,-1.0f), XMFLOAT4(Colors::Green)}),
+		Vertex({XMFLOAT3(+1.0f,-1.0f,+1.0f), XMFLOAT4(Colors::Green)}),
+		Vertex({XMFLOAT3(0.0f,+1.0f,0.0f), XMFLOAT4(Colors::Red)}),
+
+	};
+
+	std::array<uint16_t, 54> geometryIndices =
+	{
+			// front face
+		0, 1, 2,
+		0, 2, 3,
+		// back face
+		4, 6, 5,
+		4, 7, 6,
+		// left face
+		4, 5, 1,
+		4, 1, 0,
+		// right face
+		3, 2, 6,
+		3, 6, 7,
+
+		// top face
+		1, 5, 6,
+		1, 6, 2,
+
+		// bottom face
+		4, 0, 3,
+		4, 3, 7,
+
+
+		// pyramid indices
+		0, 1, 2,
+		1, 3, 2,
+		1, 4, 0,
+		0, 4, 2,
+		2, 4, 3,
+		3, 4, 1
+	};
+
+	m_geometry = std::make_unique<MeshGeometry>();
+
+	UINT geometryVBByteSize = static_cast<UINT>(geometryVertices.size() * sizeof(Vertex));
+	UINT geometryIBByteSize = static_cast<UINT>(geometryIndices.size() * sizeof(uint16_t));
+
+
+	DX::ThrowIfFailed(D3DCreateBlob(geometryVBByteSize, &m_geometry->VertexBufferCPU));
+	RtlCopyMemory(m_geometry->VertexBufferCPU->GetBufferPointer(), geometryVertices.data(), geometryVBByteSize);
+
+	DX::ThrowIfFailed(D3DCreateBlob(geometryIBByteSize, &m_geometry->IndexBufferCPU));
+	RtlCopyMemory(m_geometry->IndexBufferCPU->GetBufferPointer(), geometryIndices.data(), geometryIBByteSize);
+
+	m_geometry->VertexBufferGPU = D3DUtil::CreateDefaultBuffer(m_graphics->GetDevice(),
+		m_graphics->GetCommandList(), geometryVertices.data(), geometryVBByteSize, m_geometry->VertexBufferUploader);
+
+
+	m_geometry->IndexBufferGPU = D3DUtil::CreateDefaultBuffer(m_graphics->GetDevice(),
+		m_graphics->GetCommandList(), geometryIndices.data(), geometryIBByteSize, m_geometry->IndexBufferUploader);
+
+	m_geometry->VertexBufferByteSize = geometryVBByteSize;
+	m_geometry->VertexByteStride = sizeof(Vertex);
+	m_geometry->IndexBufferByteSize = geometryIBByteSize;
+	m_geometry->IndexFormat = DXGI_FORMAT_R16_UINT;
+
+	SubmeshGeometry boxGeo;
+	boxGeo.BaseVertexLocation = 0;
+	boxGeo.IndexCount = 36;
+	boxGeo.StartIndexLocation = 0;
+
+	m_geometry->DrawArgs["box"] = boxGeo;
+
+	SubmeshGeometry pyramidGeo;
+	pyramidGeo.BaseVertexLocation = 8;
+	pyramidGeo.IndexCount = 18;
+	pyramidGeo.StartIndexLocation = 36;
+
+	m_geometry->DrawArgs["pyramid"] = pyramidGeo;
+
+
+	std::array<VPosData, 8 > vPos =
+	{
+		VPosData({XMFLOAT3(-1.0f,-1.0f,-1.0f)}),
+		VPosData({XMFLOAT3(-1.0f,+1.0f,-1.0f)}),
+		VPosData({XMFLOAT3(+1.0f,+1.0f,-1.0f)}),
+		VPosData({XMFLOAT3(+1.0f,-1.0f,-1.0f)}),
+		VPosData({XMFLOAT3(-1.0f,-1.0f,+1.0f)}),
+		VPosData({XMFLOAT3(-1.0f,+1.0f,+1.0f)}),
+		VPosData({XMFLOAT3(+1.0f,+1.0f,+1.0f)}),
+		VPosData({XMFLOAT3(+1.0f,-1.0f,+1.0f)})
+	};
+
+	std::array<VColorData, 8> vColor =
+	{
+		VColorData({XMFLOAT4(Colors::Red)}),
+		VColorData({XMFLOAT4(Colors::Green)}),
+		VColorData({XMFLOAT4(Colors::Blue)}),
+		VColorData({XMFLOAT4(Colors::Yellow)}),
+		VColorData({XMFLOAT4(Colors::Orange)}),
+		VColorData({XMFLOAT4(Colors::White)}),
+		VColorData({XMFLOAT4(Colors::Black)}),
+		VColorData({XMFLOAT4(Colors::Indigo)})
+	};
+
+	UINT vPosByteSize = static_cast<UINT>(vPos.size() * sizeof(VPosData));
+	UINT vColorByteSize = static_cast<UINT>(vColor.size() * sizeof(VColorData));
+
+	//ComPtr<ID3DBlob>	m_copyBuffer;
+	//ComPtr<ID3DBlob>	m_errorBuffer;
+
+	//DX::ThrowIfFailed(D3DCreateBlob(vPosByteSize, m_copyBuffer.ReleaseAndGetAddressOf()));
+
+	//RtlCopyMemory(m_copyBuffer->GetBufferPointer(), vPos.data(), vPosByteSize);
+
+	m_vPosBuffer = D3DUtil::CreateDefaultBuffer(m_graphics->GetDevice(),
+		m_graphics->GetCommandList(), vPos.data(), vPosByteSize, m_vPosBufferUploader);
+
+	m_vColorBuffer = D3DUtil::CreateDefaultBuffer(m_graphics->GetDevice(),
+		m_graphics->GetCommandList(), vColor.data(), vColorByteSize, m_vColorBufferUploader);
+
+
+	m_vBufferView[0].BufferLocation = m_vPosBuffer->GetGPUVirtualAddress();
+	m_vBufferView[0].SizeInBytes = vPosByteSize;
+	m_vBufferView[0].StrideInBytes = sizeof(VPosData);
+
+	m_vBufferView[1].BufferLocation = m_vColorBuffer->GetGPUVirtualAddress();
+	m_vBufferView[1].SizeInBytes = vColorByteSize;
+	m_vBufferView[1].StrideInBytes = sizeof(VColorData);
+
 }
 
 void DemoClass::CreatePSO()
@@ -490,6 +722,7 @@ void DemoClass::CreatePSO()
 	rsDesc.FillMode = D3D12_FILL_MODE_SOLID;
 	rsDesc.CullMode = D3D12_CULL_MODE_BACK;
 
+
 	D3D12_SHADER_BYTECODE vsByteCode;
 	vsByteCode.pShaderBytecode = reinterpret_cast<BYTE*>(m_vsByteCode->GetBufferPointer());
 	vsByteCode.BytecodeLength = m_vsByteCode->GetBufferSize();
@@ -497,7 +730,6 @@ void DemoClass::CreatePSO()
 	D3D12_SHADER_BYTECODE psByteCode;
 	psByteCode.pShaderBytecode = reinterpret_cast<BYTE*>(m_psByteCode->GetBufferPointer());
 	psByteCode.BytecodeLength = m_psByteCode->GetBufferSize();
-
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psd;
 	ZeroMemory(&psd, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));

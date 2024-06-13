@@ -52,7 +52,11 @@ void BINDU::Graphics::InitDirect3D()
 		DX::ThrowIfFailed(D3D12CreateDevice(warpAdapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(m_d3dDevice.ReleaseAndGetAddressOf())));
 	}
 
+	// Getting descriptor heap increament sizes
 
+	m_rtvDescriptorIncreamentSize = m_d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	m_dsvDescriptorIncreamentSize = m_d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	m_cbvSrvUavDescriptorIncreamentSize = m_d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	
 
 
@@ -78,6 +82,7 @@ void BINDU::Graphics::InitDirect3D()
 	// Create RTV and DSV descriptor heaps.
 	CreateRtvAndDsvDescriptorHeaps();
 
+#if defined(DEBUG) || defined(_DEBUG)
 	// Creating debug command list
 	ComPtr<ID3D12DebugCommandList1>	debugCmdList;
 	DX::ThrowIfFailed(m_commandList->QueryInterface(IID_PPV_ARGS(&m_debugCommandList)));
@@ -85,7 +90,7 @@ void BINDU::Graphics::InitDirect3D()
 
 	D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE parameterType = D3D12_DEBUG_COMMAND_LIST_PARAMETER_TYPE::D3D12_DEBUG_COMMAND_LIST_PARAMETER_GPU_BASED_VALIDATION_SETTINGS;
 	DX::ThrowIfFailed(debugCmdList->GetDebugParameter(parameterType, &parameterType, sizeof(parameterType)));
-
+#endif
 
 	// Initial resize
 	this->OnResize(800, 600);

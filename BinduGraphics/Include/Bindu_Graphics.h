@@ -64,6 +64,10 @@ namespace BINDU
 
 		inline UINT Get4XMSAAQuality() const { return m_4xMSAAQuality; }
 
+		inline UINT GetRTVDescriptorIncreamentSize() const { return m_rtvDescriptorIncreamentSize; }
+		inline UINT GetDSVDescriptorIncreamentSize() const { return m_dsvDescriptorIncreamentSize; }
+		inline UINT GetCbvSrvUavDescriptorIncreamentSize() const { return m_cbvSrvUavDescriptorIncreamentSize; }
+
 	private:
 
 		void	LogAdapterOutputs(IDXGIAdapter* pAdapter);
@@ -103,6 +107,11 @@ namespace BINDU
 		// Descriptor Heaps
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>	m_rtvDescriptorHeap{ nullptr };
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>	m_dsvDescriptorHeap{ nullptr };
+
+		// Descriptor Heap handle size
+		UINT m_rtvDescriptorIncreamentSize{ 0 };
+		UINT m_dsvDescriptorIncreamentSize{ 0 };
+		UINT m_cbvSrvUavDescriptorIncreamentSize{ 0 };
 
 
 		// Buffer/ SwapChain stuffs

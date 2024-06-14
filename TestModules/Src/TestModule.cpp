@@ -157,7 +157,7 @@ void DemoClass::Update()
 	ObjectConstants objConstants;
 	XMStoreFloat4x4(&objConstants.WorldviewMatrix, XMMatrixTranspose(worldViewProj));
 	objConstants.GTime = m_timer.TotalTime();
-	objConstants.PulseColor = XMFLOAT4(Colors::Red);
+	objConstants.PulseColor = XMFLOAT4(Colors::SkyBlue);
 
 	m_objectCB->CopyData(0, objConstants);
 
@@ -763,21 +763,21 @@ void DemoClass::OnResize(int width, int height)
 
 
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine, int cmdShow)
-{
-#if defined(DEBUG) || defined(_DEBUG)
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#endif
-	BINDU::BINDU_WINDOW_DESC wndDesc = { "TestWindow",800,600 };
-	/*BINDU::Win32Window window(hInstance, wndDesc);*/
-
-	BINDU::BinduApp* demoClass = new DemoClass(hInstance, wndDesc);
-
-	DemoClass* pDemoClass = reinterpret_cast<DemoClass*>(demoClass);
-
-	int n = BINDU::Win32Application::Run(demoClass, pDemoClass->GetWindow(), cmdShow);
-	
-	_CrtDumpMemoryLeaks();
-
-	return n;
-}
+//int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine, int cmdShow)
+//{
+//#if defined(DEBUG) || defined(_DEBUG)
+//	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+//#endif
+//	BINDU::BINDU_WINDOW_DESC wndDesc = { "TestWindow",800,600 };
+//	/*BINDU::Win32Window window(hInstance, wndDesc);*/
+//
+//	BINDU::BinduApp* demoClass = new DemoClass(hInstance, wndDesc);
+//
+//	DemoClass* pDemoClass = reinterpret_cast<DemoClass*>(demoClass);
+//
+//	int n = BINDU::Win32Application::Run(demoClass, pDemoClass->GetWindow(), cmdShow);
+//	
+//	_CrtDumpMemoryLeaks();
+//
+//	return n;
+//}

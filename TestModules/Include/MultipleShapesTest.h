@@ -3,6 +3,7 @@
 #include <Win32Window.h>
 #include <Timer.h>
 #include <Bindu_Graphics.h>
+#include <MathHelper.h>
 #include <wrl.h>
 #include <DirectXPackedVector.h>
 
@@ -13,12 +14,26 @@ constexpr int gNumFrameResources = 3;
 
 struct PerPassConstants
 {
-
+	XMFLOAT4X4	ViewMatrix = MathHelper::Identity4X4();
+	XMFLOAT4X4	InvViewMatrix = MathHelper::Identity4X4();
+	XMFLOAT4X4	ProjMatrix = MathHelper::Identity4X4();
+	XMFLOAT4X4	InvProjMatrix = MathHelper::Identity4X4();
+	XMFLOAT4X4	ViewProjMatrix = MathHelper::Identity4X4();
+	XMFLOAT4X4	InvViewProjMatrix = MathHelper::Identity4X4();
+	XMFLOAT3	EyePosW = { 0.0f,0.0f,0.0f };
+	float		Pad1 = 0.0f;
+	
+	XMFLOAT2	RenderTargetSize = { 0.0f,0.0f };
+	XMFLOAT2	InvRenderTargetSize = { 0.0f,0.0f };
+	float		NearZ = 0.0f;
+	float		FarZ = 0.0f;
+	float		TotalTime = 0.0f;
+	float		DeltaTime = 0.0f;
 };
 
-struct ObjectConstants
+struct PerObjectConstants
 {
-
+	XMFLOAT4X4	WorldMatrix = MathHelper::Identity4X4();
 };
 
 struct FrameResource
@@ -29,9 +44,9 @@ public:
 		pD3DDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
 			IID_PPV_ARGS(CommandAllocator.ReleaseAndGetAddressOf()));
 
-		PerPassCB = std::make_unique<UploadBuffer<PerPassConstants>>(pD3DDevice, passCount, true);
+		PassCB = std::make_unique<UploadBuffer<PerPassConstants>>(pD3DDevice, passCount, true);
 
-		ObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(pD3DDevice, objectCount, true);
+		ObjectCB = std::make_unique<UploadBuffer<PerObjectConstants>>(pD3DDevice, objectCount, true);
 	}
 
 	FrameResource(const FrameResource& rhs) = delete;
@@ -39,8 +54,8 @@ public:
 	~FrameResource() = default;
 	
 	ComPtr<ID3D12CommandAllocator>	CommandAllocator{ nullptr };
-	std::unique_ptr < UploadBuffer<PerPassConstants>>	PerPassCB{ nullptr };
-	std::unique_ptr<UploadBuffer<ObjectConstants>>	ObjectCB{ nullptr };
+	std::unique_ptr < UploadBuffer<PerPassConstants>>	PassCB{ nullptr };
+	std::unique_ptr<UploadBuffer<PerObjectConstants>>	ObjectCB{ nullptr };
 
 	// Fence value to mark command up to this fence point
 	UINT64 Fence{ 0 };
@@ -89,6 +104,9 @@ private:
 
 	void	BuildFrameResources();
 
+	void	UpdatePerObjectCB();
+	void	UpdatePerPassCB();
+
 private:
 	GameTimer	m_timer;
 	std::unique_ptr<BINDU::Graphics>	m_graphics{ nullptr };
@@ -97,4 +115,18 @@ private:
 	std::vector<std::unique_ptr<FrameResource>>	m_frameResources;
 	FrameResource* m_pCurrFrameResource{ nullptr };
 	int	m_currFrameResourceIndex{ 0 };
+
+	// List of all render items
+	std::vector<std::unique_ptr<RenderItem>>	m_allRItem;
+
+	// Render items divided by PSO
+	std::vector<RenderItem*>	m_opaqueRItem;
+	std::vector<RenderItem*>	m_transparentRItem;
+
+
+	XMFLOAT4X4 m_viewMatrix{ MathHelper::Identity4X4() };
+	XMFLOAT4X4 m_projMatrix{ MathHelper::Identity4X4() };
+	//XMFLOAT4X4 m_viewProjMatrix{ MathHelper::Identity4X4() };
+	XMFLOAT3   m_eyePosW{ 0.0f,0.0f,0.0f };
+
 };

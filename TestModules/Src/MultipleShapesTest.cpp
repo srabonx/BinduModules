@@ -65,3 +65,58 @@ void MultiShape::BuildFrameResources()
 		m_frameResources.push_back(std::make_unique<FrameResource>(m_graphics->GetDevice(),
 			1, 10));
 }
+
+void MultiShape::UpdatePerObjectCB()
+{
+	auto currObjectCB = m_pCurrFrameResource->ObjectCB.get();
+
+	for (auto& e : m_allRItem)
+	{
+		if (e->NumFramesDirty > 0)
+		{
+			XMMATRIX worldMatrix = XMLoadFloat4x4(&e->World);
+
+			PerObjectConstants	perObjConstants;
+			XMStoreFloat4x4(&perObjConstants.WorldMatrix, XMMatrixTranspose(worldMatrix));
+
+			currObjectCB->CopyData(e->Index, perObjConstants);
+
+			e->NumFramesDirty--;
+		}
+	}
+}
+
+void MultiShape::UpdatePerPassCB()
+{
+	auto currPassCB = m_pCurrFrameResource->PassCB.get();
+
+	PerPassConstants	passConstant;
+
+	XMMATRIX viewMat = XMLoadFloat4x4(&m_viewMatrix);
+	XMMATRIX projMat = XMLoadFloat4x4(&m_projMatrix);
+
+	XMMATRIX viewProjMat = XMMatrixMultiply(viewMat, projMat);
+
+	XMMATRIX invViewMat = XMMatrixInverse(&XMMatrixDeterminant(viewMat), viewMat);
+	XMMATRIX invProjMat = XMMatrixInverse(&XMMatrixDeterminant(projMat), projMat);
+	XMMATRIX invViewProjMat = XMMatrixInverse(&XMMatrixDeterminant(viewProjMat), viewProjMat);
+
+	XMStoreFloat4x4(&passConstant.ViewMatrix, XMMatrixTranspose(viewMat));
+	XMStoreFloat4x4(&passConstant.ProjMatrix, XMMatrixTranspose(projMat));
+	XMStoreFloat4x4(&passConstant.ViewProjMatrix, XMMatrixTranspose(viewProjMat));
+	XMStoreFloat4x4(&passConstant.InvViewMatrix, XMMatrixTranspose(invViewMat));
+	XMStoreFloat4x4(&passConstant.InvProjMatrix, XMMatrixTranspose(invProjMat));
+	XMStoreFloat4x4(&passConstant.InvViewProjMatrix, XMMatrixTranspose(invViewProjMat));
+
+	passConstant.EyePosW = m_eyePosW;
+	passConstant.RenderTargetSize = { static_cast<float>(m_windowWidth), static_cast<float>(m_windowHeight) };
+	passConstant.InvRenderTargetSize = { 1.0f / passConstant.RenderTargetSize.x, 1.0f / passConstant.RenderTargetSize.y };
+
+	passConstant.NearZ = 1.0f;
+	passConstant.FarZ = 1000.0f;
+
+	passConstant.TotalTime = m_timer.TotalTime();
+	passConstant.DeltaTime = m_timer.DeltaTime();
+
+	currPassCB->CopyData(0, passConstant);
+}

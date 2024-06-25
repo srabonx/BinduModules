@@ -66,6 +66,23 @@ void MultiShape::BuildFrameResources()
 			1, 10));
 }
 
+void MultiShape::BuildDescriptorHeaps()
+{
+	UINT objcount = static_cast<UINT>(m_opaqueRItem.size());
+
+	UINT numOfDescriptor = (objcount + 1) * gNumFrameResources;
+
+	m_perPassCBVOffset = objcount * gNumFrameResources;
+
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc;
+	heapDesc.NumDescriptors = numOfDescriptor;
+	heapDesc.NodeMask = 0;
+	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+	DX::ThrowIfFailed(m_graphics->GetDevice()->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_cbvHeap)));
+}
+
 void MultiShape::UpdatePerObjectCB()
 {
 	auto currObjectCB = m_pCurrFrameResource->ObjectCB.get();
@@ -84,6 +101,66 @@ void MultiShape::UpdatePerObjectCB()
 			e->NumFramesDirty--;
 		}
 	}
+}
+
+void MultiShape::BuildRootSignature()
+{
+
+}
+
+void MultiShape::BuildConstantBufferViews()
+{
+	UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(PerObjectConstants));
+
+	UINT objCount = static_cast<UINT>(m_opaqueRItem.size());
+
+	// we need a constant buffer view for each object in each frame resource
+	for (int frameIndex = 0; frameIndex < gNumFrameResources; frameIndex++)
+	{
+		auto objectCB = m_frameResources[frameIndex]->ObjectCB->Resource();
+
+		for (UINT i = 0; i < objCount; i++)
+		{
+			D3D12_GPU_VIRTUAL_ADDRESS cbAddress = objectCB->GetGPUVirtualAddress();
+
+			// offset to the ith object constant buffer in the buffer
+			cbAddress += i * objCBByteSize;
+
+			// offset to the object cbv in the descriptor heap
+			int heapIndex = frameIndex * objCount + i;
+			auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+			handle.Offset(heapIndex, m_graphics->GetCbvSrvUavDescriptorIncreamentSize());
+
+			D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+			cbvDesc.BufferLocation = cbAddress;
+			cbvDesc.SizeInBytes = objCBByteSize;
+
+			m_graphics->GetDevice()->CreateConstantBufferView(&cbvDesc, handle);
+		}
+	}
+
+	UINT passCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(PerPassConstants));
+
+	// last 3 descriptor are the pass cbv for each frame resource
+
+	for (int frameIndex = 0; frameIndex < gNumFrameResources; frameIndex++)
+	{
+		auto passCB = m_frameResources[frameIndex]->PassCB->Resource();
+
+		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = passCB->GetGPUVirtualAddress();
+
+		// offset to pass cbv in the descriptor heap
+		int heapIndex = m_perPassCBVOffset + frameIndex;
+		auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+		handle.Offset(heapIndex, m_graphics->GetCbvSrvUavDescriptorIncreamentSize());
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+		cbvDesc.BufferLocation = cbAddress;
+		cbvDesc.SizeInBytes = passCBByteSize;
+
+		m_graphics->GetDevice()->CreateConstantBufferView(&cbvDesc, handle);
+	}
+
 }
 
 void MultiShape::UpdatePerPassCB()

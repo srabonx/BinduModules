@@ -103,6 +103,9 @@ public:
 private:
 
 	void	BuildFrameResources();
+	void	BuildDescriptorHeaps();
+	void	BuildConstantBufferViews();
+	void	BuildRootSignature();
 
 	void	UpdatePerObjectCB();
 	void	UpdatePerPassCB();
@@ -129,4 +132,6 @@ private:
 	//XMFLOAT4X4 m_viewProjMatrix{ MathHelper::Identity4X4() };
 	XMFLOAT3   m_eyePosW{ 0.0f,0.0f,0.0f };
 
+	ComPtr<ID3D12DescriptorHeap>	m_cbvHeap{ nullptr };
+	UINT	m_perPassCBVOffset{ 0 };
 };

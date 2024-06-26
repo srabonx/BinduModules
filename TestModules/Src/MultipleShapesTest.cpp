@@ -106,6 +106,38 @@ void MultiShape::UpdatePerObjectCB()
 void MultiShape::BuildRootSignature()
 {
 
+	ComPtr<ID3DBlob>	serializedRootSig{ nullptr };
+	ComPtr<ID3DBlob>	errorBlob{ nullptr };
+
+	CD3DX12_DESCRIPTOR_RANGE cbvTable0;
+	cbvTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+
+	CD3DX12_DESCRIPTOR_RANGE cbvTable1;
+	cbvTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
+
+	// Create root CBVs
+	CD3DX12_ROOT_PARAMETER rootParameter[2];
+	rootParameter[0].InitAsDescriptorTable(1, &cbvTable0);
+	rootParameter[1].InitAsDescriptorTable(1, &cbvTable1);
+
+
+
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, rootParameter, 0, nullptr,
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+
+	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
+		serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
+
+	if (errorBlob != nullptr)
+	{
+		OutputDebugStringA(reinterpret_cast<char*>(errorBlob->GetBufferPointer()));
+	}
+
+	DX::ThrowIfFailed(hr);
+
+	DX::ThrowIfFailed(m_graphics->GetDevice()->CreateRootSignature(0, serializedRootSig->GetBufferPointer(),
+		serializedRootSig->GetBufferSize(), IID_PPV_ARGS(m_rootSig.ReleaseAndGetAddressOf())));
 }
 
 void MultiShape::BuildConstantBufferViews()
@@ -196,4 +228,18 @@ void MultiShape::UpdatePerPassCB()
 	passConstant.DeltaTime = m_timer.DeltaTime();
 
 	currPassCB->CopyData(0, passConstant);
+}
+
+void MultiShape::BuildShadersAndInputLayout()
+{
+	m_shaders["standardVS"] = D3DUtil::CompileShader(RelativeResourcePath("Shaders\\color.hlsl"), 
+		nullptr, "VS", "vs_5_1");
+	m_shaders["opaquePS"] = D3DUtil::CompileShader(RelativeResourcePath("Shaders\\color.hlsl"),
+		nullptr, "PS", "ps_5_1");
+
+	m_inputLayout =
+	{
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,0 , D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+	};
 }

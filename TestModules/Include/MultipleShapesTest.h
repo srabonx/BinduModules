@@ -106,6 +106,7 @@ private:
 	void	BuildDescriptorHeaps();
 	void	BuildConstantBufferViews();
 	void	BuildRootSignature();
+	void	BuildShadersAndInputLayout();
 
 	void	UpdatePerObjectCB();
 	void	UpdatePerPassCB();
@@ -131,6 +132,12 @@ private:
 	XMFLOAT4X4 m_projMatrix{ MathHelper::Identity4X4() };
 	//XMFLOAT4X4 m_viewProjMatrix{ MathHelper::Identity4X4() };
 	XMFLOAT3   m_eyePosW{ 0.0f,0.0f,0.0f };
+
+	ComPtr<ID3D12RootSignature>		m_rootSig{ nullptr };
+
+	std::unordered_map<std::string, ComPtr<ID3DBlob>>	m_shaders;
+
+	std::vector<D3D12_INPUT_ELEMENT_DESC>	m_inputLayout;
 
 	ComPtr<ID3D12DescriptorHeap>	m_cbvHeap{ nullptr };
 	UINT	m_perPassCBVOffset{ 0 };

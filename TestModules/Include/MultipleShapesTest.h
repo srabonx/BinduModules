@@ -107,6 +107,7 @@ private:
 	void	BuildConstantBufferViews();
 	void	BuildRootSignature();
 	void	BuildShadersAndInputLayout();
+	void	BuildShapeGeometry();
 
 	void	UpdatePerObjectCB();
 	void	UpdatePerPassCB();

@@ -1,4 +1,5 @@
 #include "../Include/MultipleShapesTest.h"
+#include <GeometryGenerator.h>
 
 MultiShape::MultiShape(HINSTANCE hInstance) : BINDU::Win32Window(hInstance)
 {
@@ -242,4 +243,32 @@ void MultiShape::BuildShadersAndInputLayout()
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,0 , D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
 	};
+}
+
+void MultiShape::BuildShapeGeometry()
+{
+	GeometryGenerator geoGen;
+
+	GeometryGenerator::MeshData box = geoGen.CreateBox(1.5f, 0.5f, 1.5f, 3);
+	GeometryGenerator::MeshData grid = geoGen.CreateGrid(20.f, 30.f, 60, 40);
+	GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
+	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
+
+	// we will concat all the vertices and indices in a big buffer. so will define regions in the buffer each submesh 
+	// will cover. Cache the vertex offset of each object in the concatinated vertex/index buffer
+
+	UINT boxVertexOffset = 0;
+	UINT gridVertexOffset = static_cast<UINT>(box.Vertices.size());
+	UINT sphereVertexOffset = static_cast<UINT>(gridVertexOffset + grid.Vertices.size());
+	UINT cylinderVertexOffset = static_cast<UINT>(sphereVertexOffset + sphere.Vertices.size());
+
+	// Cache the starting index for each object in the concatinated index buffer
+
+	UINT boxIndexOffset = 0;
+	UINT gridIndexOffset = (UINT)box.Indices32.size();
+	UINT sphereIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
+	UINT cylinderIndexOffset = sphereIndexOffset + (UINT)sphere.Indices32.size();
+
+
+
 }

@@ -116,6 +116,8 @@ private:
 	void	BuildShapeGeometry();
 	void	BuildRenderItems();
 
+	void	DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritem);
+
 	void	UpdatePerObjectCB();
 	void	UpdatePerPassCB();
 

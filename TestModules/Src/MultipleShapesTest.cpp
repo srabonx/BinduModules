@@ -439,3 +439,29 @@ void MultiShape::BuildRenderItems()
 	for (auto& e : m_allRItem)
 		m_opaqueRItem.push_back(e.get());
 }
+
+void MultiShape::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritem)
+{
+	UINT objCBByteSize = D3DUtil::CalcConstantBufferByteSize(sizeof(PerObjectConstants));
+	auto objectCB = m_pCurrFrameResource->ObjectCB->Resource();
+
+	// For each RenderItem
+	for (size_t i = 0; i < ritem.size(); i++)
+	{
+		auto ri = ritem[i];
+		
+		cmdList->IASetVertexBuffers(0, 1, &ri->Geometry->GetVertexBufferView());
+		cmdList->IASetIndexBuffer(&ri->Geometry->GetIndexBufferView());
+		cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
+
+		// offset the cbv in the descriptor heap for the object
+		UINT cbvIndex = m_currFrameResourceIndex * (UINT)m_opaqueRItem.size() + ri->Index;
+
+		auto cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+		cbvHandle.Offset(cbvIndex, m_graphics->GetCbvSrvUavDescriptorIncreamentSize());
+
+		cmdList->SetGraphicsRootDescriptorTable(0, cbvHandle);
+
+		cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
+	}
+}

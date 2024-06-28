@@ -36,6 +36,12 @@ struct PerObjectConstants
 	XMFLOAT4X4	WorldMatrix = MathHelper::Identity4X4();
 };
 
+struct Vertex
+{
+	XMFLOAT3 Position;
+	XMFLOAT4 Color;
+};
+
 struct FrameResource
 {
 public:
@@ -108,6 +114,7 @@ private:
 	void	BuildRootSignature();
 	void	BuildShadersAndInputLayout();
 	void	BuildShapeGeometry();
+	void	BuildRenderItems();
 
 	void	UpdatePerObjectCB();
 	void	UpdatePerPassCB();
@@ -138,8 +145,13 @@ private:
 
 	std::unordered_map<std::string, ComPtr<ID3DBlob>>	m_shaders;
 
+	std::unordered_map<std::string, ComPtr<ID3D12PipelineState>> m_PSOs;
+
+	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> m_geometries;
+
 	std::vector<D3D12_INPUT_ELEMENT_DESC>	m_inputLayout;
 
 	ComPtr<ID3D12DescriptorHeap>	m_cbvHeap{ nullptr };
 	UINT	m_perPassCBVOffset{ 0 };
+
 };

@@ -156,4 +156,6 @@ private:
 	ComPtr<ID3D12DescriptorHeap>	m_cbvHeap{ nullptr };
 	UINT	m_perPassCBVOffset{ 0 };
 
+	bool m_isWireframe{ false };
+
 };

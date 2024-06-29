@@ -59,6 +59,77 @@ void MultiShape::Update()
 
 void MultiShape::Render()
 {
+	auto cmdAllocator = m_pCurrFrameResource->CommandAllocator;
+
+	auto cmdList = m_graphics->GetCommandList();
+
+	DX::ThrowIfFailed(cmdAllocator->Reset());
+
+	if (m_isWireframe)
+	{
+		DX::ThrowIfFailed(m_graphics->GetCommandList()->Reset(cmdAllocator.Get(), m_PSOs["opaque_wireframe"].Get()));
+	}
+	else
+	{
+		DX::ThrowIfFailed(m_graphics->GetCommandList()->Reset(cmdAllocator.Get(), m_PSOs["opaque"].Get()));
+	}
+
+	cmdList->RSSetViewports(1, m_graphics->GetViewPort());
+	cmdList->RSSetScissorRects(1, m_graphics->GetScissorRect());
+
+	// Indicate a state transition on the resource usage
+	cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+		m_graphics->GetCurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_PRESENT,
+		D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	// Clear backbuffer and depth buffer
+	cmdList->ClearRenderTargetView(m_graphics->GetCurrentBackBufferView(), DirectX::Colors::LightSteelBlue, 0, nullptr);
+	cmdList->ClearDepthStencilView(m_graphics->GetDepthStencilView(),
+		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.f, 0, 0, nullptr);
+	
+	// Specify the buffer we are going to render to
+	cmdList->OMSetRenderTargets(1, &m_graphics->GetCurrentBackBufferView(), true, &m_graphics->GetDepthStencilView());
+
+	ID3D12DescriptorHeap* descriptorHeaps[] = { m_cbvHeap.Get() };
+
+	cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	cmdList->SetGraphicsRootSignature(m_rootSig.Get());
+
+	int passCbvIndex = m_perPassCBVOffset + m_currFrameResourceIndex;
+	auto passCbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+	passCbvHandle.Offset(passCbvIndex, m_graphics->GetCbvSrvUavDescriptorIncreamentSize());
+
+	cmdList->SetGraphicsRootDescriptorTable(1, passCbvHandle);
+
+	DrawRenderItems(cmdList, m_opaqueRItem);
+
+	// Indicate a state transition on the resource usage
+	cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+		m_graphics->GetCurrentBackBuffer(),
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		D3D12_RESOURCE_STATE_PRESENT));
+	
+	// Done recording commands
+	DX::ThrowIfFailed(cmdList->Close());
+
+	// Add the command list to the queue for execution
+	ID3D12CommandList* cmdLists[] = { cmdList };
+
+	m_graphics->GetCommandQueue()->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+	// Swap the back and front buffers
+	DX::ThrowIfFailed(m_graphics->GetSwapChain()->Present(0, 0));
+
+	int currBbIndex = m_graphics->GetCurrentBackBufferIndex();
+	m_graphics->SetCurrentBackBufferIndex((currBbIndex + 1) % m_graphics->GetNumberOfSwapChainBuffer());
+
+	// Advance the fence value to mark command up to this value
+	m_graphics->SetCurrentFenceValue(m_graphics->GetCurrentFenceValue() + 1);
+	m_pCurrFrameResource->Fence = m_graphics->GetCurrentFenceValue();
+
+	m_graphics->GetCommandQueue()->Signal(m_graphics->GetFence(), m_graphics->GetCurrentFenceValue());
 }
 
 void MultiShape::BuildFrameResources()

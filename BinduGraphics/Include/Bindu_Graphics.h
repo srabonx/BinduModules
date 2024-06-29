@@ -68,6 +68,11 @@ namespace BINDU
 		inline UINT GetDSVDescriptorIncreamentSize() const { return m_dsvDescriptorIncreamentSize; }
 		inline UINT GetCbvSrvUavDescriptorIncreamentSize() const { return m_cbvSrvUavDescriptorIncreamentSize; }
 
+		inline UINT64 GetCurrentFenceValue() const { return m_currentFence; }
+		inline void SetCurrentFenceValue(UINT64 value) { m_currentFence = value; }
+
+		inline ID3D12Fence* GetFence() { return m_fence.Get(); }
+
 	private:
 
 		void	LogAdapterOutputs(IDXGIAdapter* pAdapter);

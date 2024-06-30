@@ -23,13 +23,34 @@ bool MultiShape::OnInit()
 	dxgiModeDesc.Height = m_windowHeight;
 	dxgiModeDesc.RefreshRate.Numerator = 60;
 	dxgiModeDesc.RefreshRate.Denominator = 1;
-	dxgiModeDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	dxgiModeDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 
 	m_graphics = std::make_unique<BINDU::Graphics>(&m_windowHandle, dxgiModeDesc);
 
 	m_graphics->InitDirect3D();
+	m_graphics->OnResize(m_windowWidth, m_windowHeight);
+
+	DX::ThrowIfFailed(m_graphics->GetCommandList()->Reset(m_graphics->GetCommandAllocator(), nullptr));
+
+	this->BuildRootSignature();
+	this->BuildShadersAndInputLayout();
+	this->BuildShapeGeometry();
+	this->BuildRenderItems();
+	this->BuildFrameResources();
+	this->BuildDescriptorHeaps();
+	this->BuildConstantBufferViews();
+	this->BuildPSOs();
+
+	// Execute the initialization commands
+	DX::ThrowIfFailed(m_graphics->GetCommandList()->Close());
 	
+	ID3D12CommandList* cmdLists[] = { m_graphics->GetCommandList() };
+	m_graphics->GetCommandQueue()->ExecuteCommandLists(_countof(cmdLists), cmdLists);
+
+	// wait until the initialization is complete
+	m_graphics->FlushCommandQueue();
+
+	OnResize(m_windowWidth, m_windowHeight);
+
 	m_timer.Reset();
 	return true;
 }
@@ -55,6 +76,26 @@ void MultiShape::Run()
 
 void MultiShape::Update()
 {
+	UpdateCamera();
+
+	// Cycle through the circular array of FrameResources
+	m_currFrameResourceIndex = (m_currFrameResourceIndex + 1) % gNumFrameResources;
+	m_pCurrFrameResource = m_frameResources[m_currFrameResourceIndex].get();
+
+	// Has the GPU completed processing commands of the current FrameResource?
+	// If not, then wait until GPU has completed processing commands upto this fence point.
+	if (m_pCurrFrameResource->Fence != 0 && m_graphics->GetFence()->GetCompletedValue() < m_pCurrFrameResource->Fence)
+	{
+		HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+		DX::ThrowIfFailed(
+			m_graphics->GetFence()->SetEventOnCompletion(m_pCurrFrameResource->Fence, eventHandle)
+		);
+		WaitForSingleObject(eventHandle, INFINITE);
+		CloseHandle(eventHandle);
+	}
+
+	UpdatePerObjectCB();
+	UpdatePerPassCB();
 }
 
 void MultiShape::Render()
@@ -122,8 +163,11 @@ void MultiShape::Render()
 	// Swap the back and front buffers
 	DX::ThrowIfFailed(m_graphics->GetSwapChain()->Present(0, 0));
 
-	int currBbIndex = m_graphics->GetCurrentBackBufferIndex();
-	m_graphics->SetCurrentBackBufferIndex((currBbIndex + 1) % m_graphics->GetNumberOfSwapChainBuffer());
+	int currBBuffer = m_graphics->GetCurrentBackBufferIndex();
+
+	currBBuffer = (currBBuffer + 1) % m_graphics->GetNumberOfSwapChainBuffer();
+
+	m_graphics->SetCurrentBackBufferIndex(currBBuffer);
 
 	// Advance the fence value to mark command up to this value
 	m_graphics->SetCurrentFenceValue(m_graphics->GetCurrentFenceValue() + 1);
@@ -164,6 +208,7 @@ void MultiShape::UpdatePerObjectCB()
 	{
 		if (e->NumFramesDirty > 0)
 		{
+			
 			XMMATRIX worldMatrix = XMLoadFloat4x4(&e->World);
 
 			PerObjectConstants	perObjConstants;
@@ -305,15 +350,15 @@ void MultiShape::UpdatePerPassCB()
 
 void MultiShape::BuildShadersAndInputLayout()
 {
-	m_shaders["standardVS"] = D3DUtil::CompileShader(RelativeResourcePath("Shaders\\color.hlsl"), 
+	m_shaders["standardVS"] = D3DUtil::CompileShader(RelativeResourcePath("Shaders/color.hlsl"), 
 		nullptr, "VS", "vs_5_1");
-	m_shaders["opaquePS"] = D3DUtil::CompileShader(RelativeResourcePath("Shaders\\color.hlsl"),
+	m_shaders["opaquePS"] = D3DUtil::CompileShader(RelativeResourcePath("Shaders/color.hlsl"),
 		nullptr, "PS", "ps_5_1");
 
 	m_inputLayout =
 	{
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,0 , D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+		{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
 	};
 }
 
@@ -436,7 +481,7 @@ void MultiShape::BuildRenderItems()
 		XMMatrixScaling(2.f, 2.f, 2.f) * XMMatrixTranslation(0.f, 0.5f, 0.f));
 	boxRItem->Index = 0;
 	boxRItem->Geometry = m_geometries["shapeGeo"].get();
-	boxRItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	boxRItem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	boxRItem->IndexCount = boxRItem->Geometry->DrawArgs["box"].IndexCount;
 	boxRItem->StartIndexLocation = boxRItem->Geometry->DrawArgs["box"].StartIndexLocation;
 	boxRItem->BaseVertexLocation = boxRItem->Geometry->DrawArgs["box"].BaseVertexLocation;
@@ -446,7 +491,7 @@ void MultiShape::BuildRenderItems()
 	gridRItem->World = MathHelper::Identity4X4();
 	gridRItem->Index = 1;
 	gridRItem->Geometry = m_geometries["shapeGeo"].get();
-	gridRItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	gridRItem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	gridRItem->IndexCount = gridRItem->Geometry->DrawArgs["grid"].IndexCount;
 	gridRItem->StartIndexLocation = gridRItem->Geometry->DrawArgs["grid"].StartIndexLocation;
 	gridRItem->BaseVertexLocation = gridRItem->Geometry->DrawArgs["grid"].BaseVertexLocation;
@@ -465,12 +510,12 @@ void MultiShape::BuildRenderItems()
 		XMMATRIX rightCylWorld = XMMatrixTranslation(+5.f, +1.5f, -10.f + i * 5.f);
 
 		XMMATRIX leftSphereWorld = XMMatrixTranslation(-5.f, +3.5f, -10.f + i * 5.f);
-		XMMATRIX rightSphereWorld = XMMatrixTranslation(+5.f, +1.5f, -10.f + i * 5.f);
+		XMMATRIX rightSphereWorld = XMMatrixTranslation(+5.f, +3.5f, -10.f + i * 5.f);
 
 		XMStoreFloat4x4(&leftCylRItem->World, leftCylWorld);
 		leftCylRItem->Index = objCBindex++;
 		leftCylRItem->Geometry = m_geometries["shapeGeo"].get();
-		leftCylRItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		leftCylRItem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		leftCylRItem->StartIndexLocation = leftCylRItem->Geometry->DrawArgs["cylinder"].StartIndexLocation;
 		leftCylRItem->IndexCount = leftCylRItem->Geometry->DrawArgs["cylinder"].IndexCount;
 		leftCylRItem->BaseVertexLocation = leftCylRItem->Geometry->DrawArgs["cylinder"].BaseVertexLocation;
@@ -478,7 +523,7 @@ void MultiShape::BuildRenderItems()
 		XMStoreFloat4x4(&rightCylRItem->World, rightCylWorld);
 		rightCylRItem->Index = objCBindex++;
 		rightCylRItem->Geometry = m_geometries["shapeGeo"].get();
-		rightCylRItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		rightCylRItem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		rightCylRItem->StartIndexLocation = rightCylRItem->Geometry->DrawArgs["cylinder"].StartIndexLocation;
 		rightCylRItem->IndexCount = rightCylRItem->Geometry->DrawArgs["cylinder"].IndexCount;
 		rightCylRItem->BaseVertexLocation = rightCylRItem->Geometry->DrawArgs["cylinder"].BaseVertexLocation;
@@ -486,7 +531,7 @@ void MultiShape::BuildRenderItems()
 		XMStoreFloat4x4(&leftSphereRItem->World, leftSphereWorld);
 		leftSphereRItem->Index = objCBindex++;
 		leftSphereRItem->Geometry = m_geometries["shapeGeo"].get();
-		leftSphereRItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		leftSphereRItem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		leftSphereRItem->StartIndexLocation = leftSphereRItem->Geometry->DrawArgs["sphere"].StartIndexLocation;
 		leftSphereRItem->IndexCount = leftSphereRItem->Geometry->DrawArgs["sphere"].IndexCount;
 		leftSphereRItem->BaseVertexLocation = leftSphereRItem->Geometry->DrawArgs["sphere"].BaseVertexLocation;
@@ -494,7 +539,7 @@ void MultiShape::BuildRenderItems()
 		XMStoreFloat4x4(&rightSphereRItem->World, rightSphereWorld);
 		rightSphereRItem->Index = objCBindex++;
 		rightSphereRItem->Geometry = m_geometries["shapeGeo"].get();
-		rightSphereRItem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		rightSphereRItem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		rightSphereRItem->StartIndexLocation = rightSphereRItem->Geometry->DrawArgs["sphere"].StartIndexLocation;
 		rightSphereRItem->IndexCount = rightSphereRItem->Geometry->DrawArgs["sphere"].IndexCount;
 		rightSphereRItem->BaseVertexLocation = rightSphereRItem->Geometry->DrawArgs["sphere"].BaseVertexLocation;
@@ -509,6 +554,78 @@ void MultiShape::BuildRenderItems()
 	// All render items are opaque
 	for (auto& e : m_allRItem)
 		m_opaqueRItem.push_back(e.get());
+}
+
+void MultiShape::BuildPSOs()
+{
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePSD;
+
+	// PSD for opaque objects
+
+	ZeroMemory(&opaquePSD, sizeof(opaquePSD));
+
+	opaquePSD.InputLayout = { m_inputLayout.data(), (UINT)m_inputLayout.size() };
+	opaquePSD.pRootSignature = m_rootSig.Get();
+	opaquePSD.VS =
+	{
+		reinterpret_cast<BYTE*>(m_shaders["standardVS"]->GetBufferPointer()),
+		m_shaders["standardVS"]->GetBufferSize()
+	};
+	opaquePSD.PS =
+	{
+		reinterpret_cast<BYTE*>(m_shaders["opaquePS"]->GetBufferPointer()),
+		m_shaders["opaquePS"]->GetBufferSize()
+	};
+
+	opaquePSD.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	opaquePSD.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+	//opaquePSD.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+	opaquePSD.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	opaquePSD.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	opaquePSD.SampleMask = UINT_MAX;
+	opaquePSD.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	opaquePSD.NumRenderTargets = 1;
+	opaquePSD.RTVFormats[0] = m_graphics->GetBackBufferFormat();
+	opaquePSD.SampleDesc.Count = m_graphics->Get4XMSAAState() ? 4 : 1;
+	opaquePSD.SampleDesc.Quality = m_graphics->Get4XMSAAState() ? (m_graphics->Get4XMSAAQuality() - 1) : 0;
+	opaquePSD.DSVFormat = m_graphics->GetDepthStencilFormat();
+
+	DX::ThrowIfFailed(m_graphics->GetDevice()->CreateGraphicsPipelineState(&opaquePSD, IID_PPV_ARGS(&m_PSOs["opaque"])));
+
+	// PSD for opaque wireframe objects
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueWireframePSD = opaquePSD;
+	opaqueWireframePSD.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+	DX::ThrowIfFailed(m_graphics->GetDevice()->CreateGraphicsPipelineState(&opaquePSD, IID_PPV_ARGS(&m_PSOs["opaque_wireframe"])));
+
+}
+
+void MultiShape::UpdateCamera()
+{
+	m_eyePosW.x = m_radius * sinf(m_phi) * cosf(m_Theta);
+	m_eyePosW.z = m_radius * sinf(m_phi) * sinf(m_Theta);
+	m_eyePosW.y = m_radius * cosf(m_phi);
+
+	// build the view matrix
+	XMVECTOR	pos = XMVectorSet(m_eyePosW.x, m_eyePosW.y, m_eyePosW.z, 1.0f);
+	XMVECTOR	target = XMVectorZero();
+	XMVECTOR	up = XMVectorSet(0.f, 1.f, 0.f, 0.f);
+
+	XMMATRIX	viewMat = XMMatrixLookAtLH(pos, target, up);
+
+	XMStoreFloat4x4(&m_viewMatrix, viewMat);
+}
+
+void MultiShape::OnResize(UINT width, UINT height)
+{
+	m_windowWidth = width;
+	m_windowHeight = height;
+
+	m_graphics->OnResize(m_windowWidth, m_windowHeight);
+
+	XMMATRIX projMat = XMMatrixPerspectiveFovLH(0.25 * 3.1415926535f, this->GetAspectRatio(), 1.f, 1000.f);
+	XMStoreFloat4x4(&m_projMatrix, projMat);
 }
 
 void MultiShape::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritem)
@@ -535,4 +652,101 @@ void MultiShape::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::
 
 		cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
 	}
+}
+
+LRESULT MultiShape::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+
+	switch (msg)
+	{
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+
+	case WM_ACTIVATE:
+
+		if (LOWORD(wParam) == WA_INACTIVE)
+		{
+			m_appPaused = true;
+			m_timer.Stop();
+		}
+		else
+		{
+			m_appPaused = false;
+			m_timer.Start();
+		}
+
+		break;
+
+	case WM_ENTERSIZEMOVE:
+		m_appPaused = true;
+		m_resizing = true;
+		m_timer.Stop();
+		break;
+
+	case WM_EXITSIZEMOVE:
+		m_appPaused = false;
+		m_resizing = false;
+		m_timer.Start();
+		this->OnResize(m_windowWidth, m_windowHeight);
+		break;
+
+	case WM_SIZE:
+
+		m_windowWidth = LOWORD(lParam);
+		m_windowHeight = HIWORD(lParam);
+
+		if (m_graphics)
+		{
+			if (wParam == SIZE_MINIMIZED)
+			{
+				m_appPaused = true;
+				m_minimized = true;
+				m_maximized = false;
+			}
+			else if (wParam == SIZE_MAXIMIZED)
+			{
+				m_appPaused = false;
+				m_minimized = false;
+				m_maximized = true;
+				this->OnResize(m_windowWidth, m_windowHeight);
+			}
+			else if (wParam == SIZE_RESTORED)
+			{
+				if (m_minimized)
+				{
+					m_appPaused = false;
+					m_minimized = false;
+					this->OnResize(m_windowWidth, m_windowHeight);
+				}
+				else if (m_maximized)
+				{
+					m_appPaused = false;
+					m_maximized = false;
+					this->OnResize(m_windowWidth, m_windowHeight);
+				}
+				else if (m_resizing)
+				{
+
+				}
+				else
+					this->OnResize(m_windowWidth, m_windowHeight);
+			}
+
+		}
+
+		break;
+
+	case WM_GETMINMAXINFO:
+		((MINMAXINFO*)lParam)->ptMinTrackSize.x = 200;
+		((MINMAXINFO*)lParam)->ptMinTrackSize.y = 200;
+		break;
+
+	default:
+		break;
+	}
+
+//	BINDU::Win32Input::MsgProc(hWnd, msg, wParam, lParam);
+
+	return DefWindowProc(hWnd, msg, wParam, lParam);
 }

@@ -80,7 +80,7 @@ public:
 	int NumFramesDirty{ gNumFrameResources };
 
 	// Index into the GPU constant buffer for this render item
-	UINT Index{ -1 };
+	UINT Index{ (UINT) - 1};
 
 	// Geometry associated with this render item
 	MeshGeometry* Geometry{ nullptr };
@@ -106,6 +106,7 @@ public:
 	void	Update() override;
 	void	Render() override;
 
+	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
 private:
 
 	void	BuildFrameResources();
@@ -115,11 +116,15 @@ private:
 	void	BuildShadersAndInputLayout();
 	void	BuildShapeGeometry();
 	void	BuildRenderItems();
+	void	BuildPSOs();
 
 	void	DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritem);
 
+	void	UpdateCamera();
 	void	UpdatePerObjectCB();
 	void	UpdatePerPassCB();
+
+	void	OnResize(UINT width, UINT height);
 
 private:
 	GameTimer	m_timer;
@@ -127,8 +132,8 @@ private:
 
 	//static const int	m_numFrameResource{ 3 };
 	std::vector<std::unique_ptr<FrameResource>>	m_frameResources;
-	FrameResource* m_pCurrFrameResource{ nullptr };
 	int	m_currFrameResourceIndex{ 0 };
+	FrameResource* m_pCurrFrameResource{ nullptr };
 
 	// List of all render items
 	std::vector<std::unique_ptr<RenderItem>>	m_allRItem;
@@ -157,5 +162,9 @@ private:
 	UINT	m_perPassCBVOffset{ 0 };
 
 	bool m_isWireframe{ false };
+
+	float	m_phi = 0.2f * XM_PI;
+	float	m_Theta = 1.5f * XM_PI;
+	float	m_radius = 15.f;
 
 };

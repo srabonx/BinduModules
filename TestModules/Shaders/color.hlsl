@@ -7,10 +7,10 @@ cbuffer cbPerObject : register(b0)
 cbuffer cbPerPass : register(b1)
 {
     float4x4 gViewMat;
-    float4x4 gProjMat;
-    float4x4 gViewProjMat;
     float4x4 gInvViewMat;
+    float4x4 gProjMat;
     float4x4 gInvProjMat;
+    float4x4 gViewProjMat;
     float4x4 gInvViewProjMat;
     float3 gEyePosW;
     float pad1;

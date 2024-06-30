@@ -1,6 +1,7 @@
 #include "../Include/MultipleShapesTest.h"
 #include <GeometryGenerator.h>
 #include <DirectXColors.h>
+#include <Win32Input.h>
 
 MultiShape::MultiShape(HINSTANCE hInstance) : BINDU::Win32Window(hInstance)
 {
@@ -76,6 +77,7 @@ void MultiShape::Run()
 
 void MultiShape::Update()
 {
+	
 	UpdateCamera();
 
 	// Cycle through the circular array of FrameResources
@@ -236,7 +238,7 @@ void MultiShape::BuildRootSignature()
 	// Create root CBVs
 	CD3DX12_ROOT_PARAMETER rootParameter[2];
 	rootParameter[0].InitAsDescriptorTable(1, &cbvTable0);
-	rootParameter[1].InitAsDescriptorTable(1, &cbvTable1);
+	rootParameter[1].InitAsDescriptorTable(1, &cbvTable1);	
 
 
 
@@ -474,6 +476,36 @@ void MultiShape::BuildShapeGeometry()
 	m_geometries[geo->Name] = std::move(geo);
 }
 
+void MultiShape::OnMouseDown(BINDU::MouseButton btn, int x, int y)
+{
+	m_lastMousePos.x = x;
+	m_lastMousePos.y = y;
+
+	SetCapture(m_windowHandle);
+}
+
+void MultiShape::OnMouseUp(BINDU::MouseButton btn, int x, int y)
+{
+	ReleaseCapture();
+}
+
+void MultiShape::OnMouseMove(BINDU::MouseButton btn, int x, int y)
+{
+	if (btn == BINDU::LEFT)
+	{
+		float dx = XMConvertToRadians(0.25f * static_cast<float>(x - m_lastMousePos.x));
+		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - m_lastMousePos.y));
+
+		m_Theta += dx;
+		m_phi += dy;
+
+		m_phi = MathHelper::Clamp(m_phi, 0.1f, 3.1415926535f - 0.1f);
+	}
+
+	m_lastMousePos.x = x;
+	m_lastMousePos.y = y;
+}
+
 void MultiShape::BuildRenderItems()
 {
 	auto boxRItem = std::make_unique<RenderItem>();
@@ -617,6 +649,39 @@ void MultiShape::UpdateCamera()
 	XMStoreFloat4x4(&m_viewMatrix, viewMat);
 }
 
+void MultiShape::HandleInputs()
+{
+	using namespace BINDU;
+
+
+
+	if (Win32Input::IsMouseButtonPressed(LEFT))
+	{
+		m_lastMousePos.x = Win32Input::GetCurrMouseX();
+		m_lastMousePos.y = Win32Input::GetCurrMouseY();
+
+	//	SetCapture(m_windowHandle);
+	}
+	
+	else if (Win32Input::IsMouseButtonReleased(LEFT))
+	{
+		ReleaseCapture();
+	}
+
+	//if (Win32Input::IsMouseMoved(LEFT))
+	//{
+	//	float dx = XMConvertToRadians(0.25f * static_cast<float>(Win32Input::GetCurrMouseX() - m_lastMousePos.x));
+	//	float dy = XMConvertToRadians(0.25f * static_cast<float>(Win32Input::GetCurrMouseY() - m_lastMousePos.y));
+
+	//	m_Theta += dx;
+	//	m_phi += dy;
+
+	//	m_phi = MathHelper::Clamp(m_phi, 0.1f, 3.14159f - 0.1f);
+
+	//}
+
+}
+
 void MultiShape::OnResize(UINT width, UINT height)
 {
 	m_windowWidth = width;
@@ -746,7 +811,7 @@ LRESULT MultiShape::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
-//	BINDU::Win32Input::MsgProc(hWnd, msg, wParam, lParam);
+	this->InputMsgProc(hWnd, msg, wParam, lParam);
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }

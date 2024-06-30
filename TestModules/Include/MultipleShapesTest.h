@@ -6,6 +6,7 @@
 #include <MathHelper.h>
 #include <wrl.h>
 #include <DirectXPackedVector.h>
+#include <Win32Input.h>
 
 using namespace Microsoft::WRL;
 using namespace DirectX;
@@ -94,7 +95,7 @@ public:
 	int	 BaseVertexLocation{ 0 };
 };
 
-class MultiShape: public BINDU::BinduApp, public BINDU::Win32Window
+class MultiShape : public BINDU::BinduApp, public BINDU::Win32Window, public BINDU::Win32Input
 {
 public:
 	MultiShape(HINSTANCE hInstance);
@@ -109,6 +110,10 @@ public:
 	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
 private:
 
+	void	OnMouseDown(BINDU::MouseButton btn, int x, int y) override;
+	void	OnMouseUp(BINDU::MouseButton btn, int x, int y) override;
+	void	OnMouseMove(BINDU::MouseButton btn, int x, int y) override;
+
 	void	BuildFrameResources();
 	void	BuildDescriptorHeaps();
 	void	BuildConstantBufferViews();
@@ -121,6 +126,7 @@ private:
 	void	DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritem);
 
 	void	UpdateCamera();
+	void	HandleInputs();
 	void	UpdatePerObjectCB();
 	void	UpdatePerPassCB();
 
@@ -166,5 +172,7 @@ private:
 	float	m_phi = 0.2f * XM_PI;
 	float	m_Theta = 1.5f * XM_PI;
 	float	m_radius = 15.f;
+
+	POINT	m_lastMousePos{ 0,0 };
 
 };

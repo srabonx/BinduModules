@@ -334,7 +334,7 @@ LRESULT DemoClass::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
-	BINDU::Win32Input::MsgProc(hWnd, msg, wParam, lParam);
+	//BINDU::Win32Input::MsgProc(hWnd, msg, wParam, lParam);
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }

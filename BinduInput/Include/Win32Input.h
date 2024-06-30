@@ -74,6 +74,7 @@ constexpr uint8_t MAX_KEYBOARD_KEY = 255;				// Currently supports
 	{
 		bool WasDown{ false };
 		bool IsDown{ false };
+		bool IsMoving{ false };
 	};
 
 	struct MousePos
@@ -96,6 +97,10 @@ constexpr uint8_t MAX_KEYBOARD_KEY = 255;				// Currently supports
 	
 	public:
 
+		virtual void OnMouseDown(MouseButton btn, int x, int y) = 0;
+		virtual void OnMouseMove(MouseButton btn, int x, int y) = 0;
+		virtual void OnMouseUp(MouseButton btn, int x, int y) = 0;
+
 		static bool	IsMouseButtonPressed(MouseButton btn);
 		static bool IsMouseButtonReleased(MouseButton btn);
 		static bool IsMouseButtonHold(MouseButton btn);
@@ -105,7 +110,7 @@ constexpr uint8_t MAX_KEYBOARD_KEY = 255;				// Currently supports
 		static bool IsKeyReleased(uint8_t key);
 		static bool IsKeyHold(uint8_t key);
 
-		static void MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam); // Needs to be called on the Window message loop
+		void InputMsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam); // Needs to be called on the Window message loop
 
 
 		// Getters 
@@ -122,7 +127,10 @@ constexpr uint8_t MAX_KEYBOARD_KEY = 255;				// Currently supports
 	private:
 
 		static void ProcessKeyboardInput(WPARAM wParam, LPARAM lParam);			// Needs to be called on the Window message loop
-		static void ProcessMouseInput(WPARAM wParam);							// Needs to be called on the Window message loop
+		void ProcessMouseDown(WPARAM wParam, LPARAM lParam);			// Needs to be called on the Window message loop
+		void ProcessMouseUp(WPARAM wParam, LPARAM lParam);
+		void ProcessMouseMove(WPARAM wParam, LPARAM lParam);
+		static void ProcessMouseMovement(WPARAM wParam);						// Needs to be called on the Window message loop
 		static void UpdateMousePos(LPARAM lParam);								// Needs to be called on the Window message loop
 
 

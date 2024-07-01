@@ -6,6 +6,7 @@
 #include <Win32Input.h>
 #include <MathHelper.h>
 #include <fstream>
+#include <ObjLoader.h>
 
 
 DemoClass::DemoClass(HINSTANCE hInstance) : BINDU::Win32Window(hInstance)
@@ -87,49 +88,6 @@ void DemoClass::Run()
 void DemoClass::Update()
 {
 
-	//if (BINDU::Win32Input::IsMouseButtonPressed(BINDU::MouseButton::LEFT))
-	//{
-
-	//	m_lastMousePos.x = BINDU::Win32Input::GetMousePosition().currX;
-	//	m_lastMousePos.y = BINDU::Win32Input::GetMousePosition().currY;
-	//}
-
-	if (BINDU::Win32Input::IsMouseMoved(BINDU::MouseButton::LEFT))
-	{
-
-		SetCapture(m_windowHandle);
-		float dx = XMConvertToRadians(0.15f * static_cast<float>(BINDU::Win32Input::GetMousePosition().currX - m_lastMousePos.x));
-		float dy = XMConvertToRadians(0.15f * static_cast<float>(BINDU::Win32Input::GetMousePosition().currY - m_lastMousePos.y));
-
-		m_theta += dx;
-		m_phi += dy;
-
-		m_phi = MathHelper::Clamp(m_phi, 0.1f, 3.1419f - 0.1f);
-		m_lastMousePos.x = BINDU::Win32Input::GetMousePosition().currX;
-		m_lastMousePos.y = BINDU::Win32Input::GetMousePosition().currY;
-		
-	}
-	else if (BINDU::Win32Input::IsMouseMoved(BINDU::MouseButton::RIGHT))
-	{
-		SetCapture(m_windowHandle);
-		float dx = 0.005f * static_cast<float>(BINDU::Win32Input::GetMousePosition().currX - m_lastMousePos.x);
-		float dy = 0.005f * static_cast<float>(BINDU::Win32Input::GetMousePosition().currY - m_lastMousePos.y);
-
-		// Update the camera radius based on input.
-		m_radius += dx - dy;
-
-		// Restrict the radius.
-		m_radius = MathHelper::Clamp(m_radius, 3.0f, 15.0f);
-
-		m_lastMousePos.x = BINDU::Win32Input::GetMousePosition().currX;
-		m_lastMousePos.y = BINDU::Win32Input::GetMousePosition().currY;
-	}
-	else if (BINDU::Win32Input::IsMouseButtonReleased(BINDU::MouseButton::LEFT))
-	{
-		ReleaseCapture();
-		m_lastMousePos.x = BINDU::Win32Input::GetMousePosition().currX;
-		m_lastMousePos.y = BINDU::Win32Input::GetMousePosition().currY;
-	}
 
 	static float angle = 0.f;
 
@@ -242,6 +200,44 @@ void DemoClass::Render()
 	
 }
 
+void DemoClass::OnMouseDown(BINDU::MouseButton btn, int x, int y)
+{
+	m_lastMousePos.x = x;
+	m_lastMousePos.y = y;
+
+	SetCapture(m_windowHandle);
+}
+
+void DemoClass::OnMouseUp(BINDU::MouseButton btn, int x, int y)
+{
+	ReleaseCapture();
+}
+
+void DemoClass::OnMouseMove(BINDU::MouseButton btn, int x, int y)
+{
+	if (btn == BINDU::LEFT)
+	{
+		float dx = XMConvertToRadians(0.25f * static_cast<float>(x - m_lastMousePos.x));
+		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - m_lastMousePos.y));
+
+		m_theta += dx;
+		m_phi += dy;
+
+		m_phi = MathHelper::Clamp(m_phi, 0.1f, 3.1415926535f - 0.1f);
+	}
+
+	m_lastMousePos.x = x;
+	m_lastMousePos.y = y;
+}
+
+void DemoClass::OnKeyboardDown(BINDU::KeyBoardKey key, bool isDown, bool repeat)
+{
+}
+
+void DemoClass::OnKeyboardUp(BINDU::KeyBoardKey key, bool isUp, bool repeat)
+{
+}
+
 LRESULT DemoClass::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 
@@ -334,7 +330,7 @@ LRESULT DemoClass::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
-	//BINDU::Win32Input::MsgProc(hWnd, msg, wParam, lParam);
+	Win32Input::InputMsgProc(hWnd, msg, wParam, lParam);
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
@@ -411,8 +407,8 @@ void DemoClass::CreateInputLayoutAndShaders()
 {
 	
 
-	m_vsByteCode = D3DUtil::CompileShader(RelativeResourcePath("Shaders/color.hlsl"), nullptr, "VS", "vs_5_0");
-	m_psByteCode = D3DUtil::CompileShader(RelativeResourcePath("Shaders/color.hlsl"), nullptr, "PS", "ps_5_0");
+	m_vsByteCode = D3DUtil::CompileShader(RelativeResourcePath("Shaders/TestModuleColor.hlsl"), nullptr, "VS", "vs_5_0");
+	m_psByteCode = D3DUtil::CompileShader(RelativeResourcePath("Shaders/TestModuleColor.hlsl"), nullptr, "PS", "ps_5_0");
 
 	
 	m_inputLayout =
@@ -442,45 +438,67 @@ void DemoClass::CreateInputLayoutAndShaders()
 // the box that will be drawn
 void DemoClass::CreateBoxGeometry()
 {
-	std::array<Vertex, 8>	vertices =
+	//std::array<Vertex, 8>	vertices =
+	//{
+	//	Vertex({XMFLOAT3(-1.0f,-1.0f,-1.0f), XMFLOAT4(Colors::Red)}),
+	//	Vertex({XMFLOAT3(-1.0f,+1.0f,-1.0f), XMFLOAT4(Colors::Green)}),
+	//	Vertex({XMFLOAT3(+1.0f,+1.0f,-1.0f), XMFLOAT4(Colors::Blue)}),
+	//	Vertex({XMFLOAT3(+1.0f,-1.0f,-1.0f), XMFLOAT4(Colors::Yellow)}),
+	//	Vertex({XMFLOAT3(-1.0f,-1.0f,+1.0f), XMFLOAT4(Colors::Violet)}),
+	//	Vertex({XMFLOAT3(-1.0f,+1.0f,+1.0f), XMFLOAT4(Colors::Indigo)}),
+	//	Vertex({XMFLOAT3(+1.0f,+1.0f,+1.0f), XMFLOAT4(Colors::Orange)}),
+	//	Vertex({XMFLOAT3(+1.0f,-1.0f,+1.0f), XMFLOAT4(Colors::Black)}),
+
+	//};
+
+	ObjLoader::Model model = ObjLoader::LoadFromFile("C:/Users/letsd/OneDrive/Documents/untitled.obj");
+
+	//for (int i = 0; i < vertices.size(); i++)
+	//{
+	//	vertices[i].pos = XMFLOAT3(model.Vertices[i].Position);
+	//}
+
+	std::vector<Vertex> vertices(model.Vertices.size());
+	for (int i = 0; i < model.Vertices.size(); i++)
 	{
-		Vertex({XMFLOAT3(-1.0f,-1.0f,-1.0f), XMFLOAT4(Colors::Red)}),
-		Vertex({XMFLOAT3(-1.0f,+1.0f,-1.0f), XMFLOAT4(Colors::Green)}),
-		Vertex({XMFLOAT3(+1.0f,+1.0f,-1.0f), XMFLOAT4(Colors::Blue)}),
-		Vertex({XMFLOAT3(+1.0f,-1.0f,-1.0f), XMFLOAT4(Colors::Yellow)}),
-		Vertex({XMFLOAT3(-1.0f,-1.0f,+1.0f), XMFLOAT4(Colors::Violet)}),
-		Vertex({XMFLOAT3(-1.0f,+1.0f,+1.0f), XMFLOAT4(Colors::Indigo)}),
-		Vertex({XMFLOAT3(+1.0f,+1.0f,+1.0f), XMFLOAT4(Colors::Orange)}),
-		Vertex({XMFLOAT3(+1.0f,-1.0f,+1.0f), XMFLOAT4(Colors::Black)}),
-
-	};
+		vertices[i].pos = XMFLOAT3(model.Vertices[i].Position);
+		vertices[i].color = XMFLOAT4(Colors::Orange);
+	}
 
 
-	std::array<std::uint16_t, 36> indices =
-	{
-		// front face
-		0, 1, 2,
-		0, 2, 3,
-		// back face
-		4, 6, 5,
-		4, 7, 6,
-		// left face
-		4, 5, 1,
-		4, 1, 0,
-		// right face
-		3, 2, 6,
-		3, 6, 7,
+	//std::array<std::uint16_t, 36> indices =
+	//{
+	//	// front face
+	//	0, 1, 2,
+	//	0, 2, 3,
+	//	// back face
+	//	4, 6, 5,
+	//	4, 7, 6,
+	//	// left face
+	//	4, 5, 1,
+	//	4, 1, 0,
+	//	// right face
+	//	3, 2, 6,
+	//	3, 6, 7,
 
-		// top face
-		1, 5, 6,
-		1, 6, 2,
+	//	// top face
+	//	1, 5, 6,
+	//	1, 6, 2,
 
-		// bottom face
-		4, 0, 3,
-		4, 3, 7
+	//	// bottom face
+	//	4, 0, 3,
+	//	4, 3, 7
 
-	};
+	//};
 
+	
+
+	//const int size = model.VertexIndices.size();
+
+	std::vector<std::uint16_t> indices;
+
+	indices = model.VertexIndices;
+	
 
 	const UINT vbByteSize = static_cast<UINT>(vertices.size() * sizeof(Vertex));
 	const UINT ibByteSize = static_cast<UINT>(indices.size() * sizeof(std::uint16_t));
@@ -720,7 +738,7 @@ void DemoClass::CreatePSO()
 
 	CD3DX12_RASTERIZER_DESC rsDesc(D3D12_DEFAULT);
 	rsDesc.FillMode = D3D12_FILL_MODE_SOLID;
-	rsDesc.CullMode = D3D12_CULL_MODE_BACK;
+	rsDesc.CullMode = D3D12_CULL_MODE_NONE;
 
 
 	D3D12_SHADER_BYTECODE vsByteCode;

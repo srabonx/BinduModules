@@ -1,4 +1,5 @@
 #include "../Include/MultipleShapesTest.h"
+#include "../Include/TestModule.h"
 #include <Win32Application.h>
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine, int cmdShow)
@@ -12,9 +13,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
 	wndDesc.windowWidth = 800;
 	wndDesc.windowTitle = "MultiShape";
 
-	BINDU::BinduApp* app = new MultiShape(hInstance, wndDesc);
+	BINDU::BinduApp* app = new DemoClass(hInstance, wndDesc);
 
-	MultiShape* pApp = reinterpret_cast<MultiShape*>(app);
+	DemoClass* pApp = reinterpret_cast<DemoClass*>(app);
 
 	int n = BINDU::Win32Application::Run(app, pApp->GetWindow(), cmdShow);
 

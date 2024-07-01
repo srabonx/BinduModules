@@ -22,11 +22,13 @@
     <ClInclude Include="Include\Bindu_Util.h" />
     <ClInclude Include="Include\GeometryGenerator.h" />
     <ClInclude Include="Include\MathHelper.h" />
+    <ClInclude Include="Include\ObjLoader.h" />
     <ClInclude Include="Include\Timer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\Bindu_Util.cpp" />
     <ClCompile Include="Src\GeometryGenerator.cpp" />
+    <ClCompile Include="Src\ObjLoader.cpp" />
     <ClCompile Include="Src\Timer.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

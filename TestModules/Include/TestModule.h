@@ -4,44 +4,50 @@
 #include <Win32Window.h>
 #include <Bindu_Graphics.h>
 #include <DirectXMath.h>
+#include <Win32Input.h>
 
 using namespace DirectX;
-struct Vertex
-{
-	XMFLOAT3 pos;
-	XMFLOAT4 color;
-};
-
-struct Vertex2
-{
-	XMFLOAT3 Pos;
-	XMFLOAT3 Tanjent;
-	XMFLOAT3 Normal;
-	XMFLOAT2 Tex0;
-	XMFLOAT3 Tex1;
-	XMFLOAT4 Color;
-};
-
-struct VPosData
-{
-	XMFLOAT3 Pos;
-};
-
-struct VColorData
-{
-	XMFLOAT4 Color;
-};
 
 
-struct ObjectConstants
+class DemoClass : public BINDU::BinduApp, public BINDU::Win32Window, public BINDU::Win32Input
 {
-	DirectX::XMFLOAT4X4 WorldviewMatrix;
-	XMFLOAT4	PulseColor;
-	double	GTime;
-};
+public:
 
-class DemoClass : public BINDU::BinduApp, public BINDU::Win32Window
-{
+	struct Vertex
+	{
+		XMFLOAT3 pos;
+		XMFLOAT4 color;
+	};
+
+	struct Vertex2
+	{
+		XMFLOAT3 Pos;
+		XMFLOAT3 Tanjent;
+		XMFLOAT3 Normal;
+		XMFLOAT2 Tex0;
+		XMFLOAT3 Tex1;
+		XMFLOAT4 Color;
+	};
+
+	struct VPosData
+	{
+		XMFLOAT3 Pos;
+	};
+
+	struct VColorData
+	{
+		XMFLOAT4 Color;
+	};
+
+
+	struct ObjectConstants
+	{
+		DirectX::XMFLOAT4X4 WorldviewMatrix;
+		XMFLOAT4	PulseColor;
+		double	GTime;
+	};
+
+
 public:
 	DemoClass(HINSTANCE hInstance);
 	DemoClass(HINSTANCE hInstance, BINDU::BINDU_WINDOW_DESC windowDesc);
@@ -55,6 +61,14 @@ public:
 	
 
 private:
+
+	void	OnMouseDown(BINDU::MouseButton btn, int x, int y) override;
+	void	OnMouseUp(BINDU::MouseButton btn, int x, int y) override;
+	void	OnMouseMove(BINDU::MouseButton btn, int x, int y) override;
+
+	void	OnKeyboardDown(BINDU::KeyBoardKey key, bool isDown, bool repeat) override;
+	void	OnKeyboardUp(BINDU::KeyBoardKey key, bool isUp, bool repeat) override;
+
 
 	void CreateDescriptorHeaps();
 

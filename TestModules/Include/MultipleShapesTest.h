@@ -114,6 +114,9 @@ private:
 	void	OnMouseUp(BINDU::MouseButton btn, int x, int y) override;
 	void	OnMouseMove(BINDU::MouseButton btn, int x, int y) override;
 
+	void	OnKeyboardDown(BINDU::KeyBoardKey key, bool isDown, bool repeat) override;
+	void	OnKeyboardUp(BINDU::KeyBoardKey key, bool isUp, bool repeat) override;
+
 	void	BuildFrameResources();
 	void	BuildDescriptorHeaps();
 	void	BuildConstantBufferViews();
@@ -126,7 +129,6 @@ private:
 	void	DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritem);
 
 	void	UpdateCamera();
-	void	HandleInputs();
 	void	UpdatePerObjectCB();
 	void	UpdatePerPassCB();
 

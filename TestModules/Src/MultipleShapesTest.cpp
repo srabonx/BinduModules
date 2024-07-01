@@ -344,8 +344,8 @@ void MultiShape::UpdatePerPassCB()
 	passConstant.NearZ = 1.0f;
 	passConstant.FarZ = 1000.0f;
 
-	passConstant.TotalTime = m_timer.TotalTime();
-	passConstant.DeltaTime = m_timer.DeltaTime();
+	passConstant.TotalTime = static_cast<float>(m_timer.TotalTime());
+	passConstant.DeltaTime = static_cast<float>(m_timer.DeltaTime());
 
 	currPassCB->CopyData(0, passConstant);
 }
@@ -390,22 +390,22 @@ void MultiShape::BuildShapeGeometry()
 
 	// Define submesh that covers different region of the vertex index buffer
 	SubmeshGeometry boxSubmesh;
-	boxSubmesh.IndexCount = box.Indices32.size();
+	boxSubmesh.IndexCount = (UINT)box.Indices32.size();
 	boxSubmesh.StartIndexLocation = boxIndexOffset;
 	boxSubmesh.BaseVertexLocation = boxVertexOffset;
 
 	SubmeshGeometry gridSubmesh;
-	gridSubmesh.IndexCount = grid.Indices32.size();
+	gridSubmesh.IndexCount = (UINT)grid.Indices32.size();
 	gridSubmesh.StartIndexLocation = gridIndexOffset;
 	gridSubmesh.BaseVertexLocation = gridVertexOffset;
 
 	SubmeshGeometry sphereSubmesh;
-	sphereSubmesh.IndexCount = sphere.Indices32.size();
+	sphereSubmesh.IndexCount = (UINT)sphere.Indices32.size();
 	sphereSubmesh.StartIndexLocation = sphereIndexOffset;
 	sphereSubmesh.BaseVertexLocation = sphereVertexOffset;
 
 	SubmeshGeometry cylinderSubmesh;
-	cylinderSubmesh.IndexCount = cylinder.Indices32.size();
+	cylinderSubmesh.IndexCount = (UINT)cylinder.Indices32.size();
 	cylinderSubmesh.StartIndexLocation = cylinderIndexOffset;
 	cylinderSubmesh.BaseVertexLocation = cylinderVertexOffset;
 
@@ -588,6 +588,22 @@ void MultiShape::BuildRenderItems()
 		m_opaqueRItem.push_back(e.get());
 }
 
+void MultiShape::OnKeyboardDown(BINDU::KeyBoardKey key, bool isDown, bool repeat)
+{
+
+	if (key == BINDU::KeyBoardKey::A && !repeat)
+	{
+		m_isWireframe = true;
+	}
+}
+
+void MultiShape::OnKeyboardUp(BINDU::KeyBoardKey key, bool isUp, bool repeat)
+{
+	if (key == BINDU::KeyBoardKey::A && isUp)
+		m_isWireframe = false;
+
+}
+
 void MultiShape::BuildPSOs()
 {
 
@@ -629,7 +645,7 @@ void MultiShape::BuildPSOs()
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueWireframePSD = opaquePSD;
 	opaqueWireframePSD.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
-	DX::ThrowIfFailed(m_graphics->GetDevice()->CreateGraphicsPipelineState(&opaquePSD, IID_PPV_ARGS(&m_PSOs["opaque_wireframe"])));
+	DX::ThrowIfFailed(m_graphics->GetDevice()->CreateGraphicsPipelineState(&opaqueWireframePSD, IID_PPV_ARGS(&m_PSOs["opaque_wireframe"])));
 
 }
 
@@ -647,39 +663,6 @@ void MultiShape::UpdateCamera()
 	XMMATRIX	viewMat = XMMatrixLookAtLH(pos, target, up);
 
 	XMStoreFloat4x4(&m_viewMatrix, viewMat);
-}
-
-void MultiShape::HandleInputs()
-{
-	using namespace BINDU;
-
-
-
-	if (Win32Input::IsMouseButtonPressed(LEFT))
-	{
-		m_lastMousePos.x = Win32Input::GetCurrMouseX();
-		m_lastMousePos.y = Win32Input::GetCurrMouseY();
-
-	//	SetCapture(m_windowHandle);
-	}
-	
-	else if (Win32Input::IsMouseButtonReleased(LEFT))
-	{
-		ReleaseCapture();
-	}
-
-	//if (Win32Input::IsMouseMoved(LEFT))
-	//{
-	//	float dx = XMConvertToRadians(0.25f * static_cast<float>(Win32Input::GetCurrMouseX() - m_lastMousePos.x));
-	//	float dy = XMConvertToRadians(0.25f * static_cast<float>(Win32Input::GetCurrMouseY() - m_lastMousePos.y));
-
-	//	m_Theta += dx;
-	//	m_phi += dy;
-
-	//	m_phi = MathHelper::Clamp(m_phi, 0.1f, 3.14159f - 0.1f);
-
-	//}
-
 }
 
 void MultiShape::OnResize(UINT width, UINT height)

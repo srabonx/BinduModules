@@ -14,11 +14,11 @@
 
 namespace BINDU
 {
-	class Graphics
+	class DX12Graphics
 	{
 	public:
-		Graphics(HWND* hwnd, DXGI_MODE_DESC backBufferDisplayMode, DXGI_FORMAT backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM);
-		~Graphics();
+		DX12Graphics(HWND* hwnd, DXGI_MODE_DESC backBufferDisplayMode, DXGI_FORMAT backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM);
+		virtual ~DX12Graphics();
 
 		void	InitDirect3D();
 		void	FlushCommandQueue();
@@ -34,7 +34,7 @@ namespace BINDU
 
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentBackBufferView() const;
 
-		inline ID3D12Resource* GetCurrentBackBuffer() const { return m_dxgiSwapChainBuffer[m_currentBackBuffer].Get(); }
+		inline ID3D12Resource* GetCurrentBackBuffer() const { return m_dxgiSwapChainBuffers[m_currentBackBuffer].Get(); }
 
 		D3D12_CPU_DESCRIPTOR_HANDLE GetDepthStencilView() const;
 
@@ -87,7 +87,13 @@ namespace BINDU
 
 		void	CreateRtvAndDsvDescriptorHeaps();
 
-	private:
+	protected:
+
+		// Only a single instance can be made
+		static DX12Graphics* m_dx12GraphicsInstance;
+
+		// Is the Direct3D initialized?
+		bool m_d3dInitialized{ false };
 
 		// Pointer to the Output Win32Window
 		HWND* m_hwndOutputWindow{ nullptr };
@@ -123,11 +129,11 @@ namespace BINDU
 		Microsoft::WRL::ComPtr<IDXGISwapChain>	m_dxgiSwapChain{ nullptr };
 		static const int m_swapChainBufferCount{ 2 };
 		int	m_currentBackBuffer{ 0 };
-		Microsoft::WRL::ComPtr<ID3D12Resource> m_dxgiSwapChainBuffer[m_swapChainBufferCount]{ nullptr };
+		Microsoft::WRL::ComPtr<ID3D12Resource> m_dxgiSwapChainBuffers[m_swapChainBufferCount]{ nullptr };
 		Microsoft::WRL::ComPtr<ID3D12Resource> m_depthStencilBuffer{ nullptr };
 		DXGI_FORMAT m_backBufferFormat{ DXGI_FORMAT_R8G8B8A8_UNORM };
 		DXGI_FORMAT m_depthStencilFormat{ DXGI_FORMAT_D24_UNORM_S8_UINT };
-		DXGI_MODE_DESC	m_dxgiModeDesc = { 0 };
+		DXGI_MODE_DESC	m_swapchainBufferDesc = { 0 };
 
 		D3D12_VIEWPORT	m_viewport;
 		D3D12_RECT		m_scissorRect;

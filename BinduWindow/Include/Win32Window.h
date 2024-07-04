@@ -21,7 +21,7 @@ namespace BINDU
 	{
 	public:
 		Win32Window(HINSTANCE hInstance);
-		Win32Window(HINSTANCE hInstance, const BINDU_WINDOW_DESC windowDesc);
+		Win32Window(HINSTANCE hInstance, const BINDU_WINDOW_DESC& windowDesc);
 		Win32Window(const Win32Window& window) = delete;
 		Win32Window& operator= (const Win32Window& window) = delete;
 		virtual ~Win32Window();

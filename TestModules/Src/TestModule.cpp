@@ -32,7 +32,7 @@ bool DemoClass::OnInit()
 	desc.RefreshRate.Denominator = 1;
 	desc.RefreshRate.Numerator = 60;
 
-	m_graphics = std::make_unique<BINDU::Graphics>(m_window->GetWindowHandle(), desc);
+	m_graphics = std::make_unique<BINDU::DX12Graphics>(m_window->GetWindowHandle(), desc);
 
 	m_graphics->InitDirect3D();
 	m_graphics->OnResize(800, 600);
@@ -200,6 +200,11 @@ void DemoClass::Render()
 	
 }
 
+bool DemoClass::OnDestroy()
+{
+	return false;
+}
+
 void DemoClass::OnMouseDown(BINDU::MouseButton btn, int x, int y)
 {
 	m_lastMousePos.x = x;
@@ -224,6 +229,18 @@ void DemoClass::OnMouseMove(BINDU::MouseButton btn, int x, int y)
 		m_phi += dy;
 
 		m_phi = MathHelper::Clamp(m_phi, 0.1f, 3.1415926535f - 0.1f);
+	}
+
+	if (btn == BINDU::RIGHT)
+	{
+		float dx = 0.05f * static_cast<float>(x - m_lastMousePos.x);
+		float dy = 0.05f * static_cast<float>(y - m_lastMousePos.y);
+
+		// Update the camera radius based on input.
+		m_radius += dx - dy;
+
+		// Restrict the radius.
+		m_radius = MathHelper::Clamp(m_radius, 5.0f, 150.0f);
 	}
 
 	m_lastMousePos.x = x;
@@ -451,18 +468,34 @@ void DemoClass::CreateBoxGeometry()
 
 	//};
 
-	ObjLoader::Model model = ObjLoader::LoadFromFile("C:/Users/letsd/OneDrive/Documents/untitled.obj");
+	ObjLoader::Model model = ObjLoader::LoadFromFile(RelativeResourcePath("Shaders/untitled.obj"));
 
 	//for (int i = 0; i < vertices.size(); i++)
 	//{
 	//	vertices[i].pos = XMFLOAT3(model.Vertices[i].Position);
 	//}
 
+	XMFLOAT4 color = XMFLOAT4(Colors::Red);
+
 	std::vector<Vertex> vertices(model.Vertices.size());
 	for (int i = 0; i < model.Vertices.size(); i++)
 	{
 		vertices[i].pos = XMFLOAT3(model.Vertices[i].Position);
-		vertices[i].color = XMFLOAT4(Colors::Orange);
+		color.w += 0.1;
+		color.x += 0.02;
+		color.z += 0.22;
+		color.y += 0.16;
+
+		if (color.w > 1)
+			color.w = 0;
+		if (color.x > 1)
+			color.x = 0;
+		if (color.y > 1)
+			color.y = 0;
+		if (color.z > 1)
+			color.z = 0;
+
+		vertices[i].color = color;
 	}
 
 
@@ -496,6 +529,8 @@ void DemoClass::CreateBoxGeometry()
 	//const int size = model.VertexIndices.size();
 
 	std::vector<std::uint16_t> indices;
+
+	int size = model.VertexIndices.size();
 
 	indices = model.VertexIndices;
 	
@@ -738,7 +773,7 @@ void DemoClass::CreatePSO()
 
 	CD3DX12_RASTERIZER_DESC rsDesc(D3D12_DEFAULT);
 	rsDesc.FillMode = D3D12_FILL_MODE_SOLID;
-	rsDesc.CullMode = D3D12_CULL_MODE_NONE;
+	rsDesc.CullMode = D3D12_CULL_MODE_BACK;
 
 
 	D3D12_SHADER_BYTECODE vsByteCode;

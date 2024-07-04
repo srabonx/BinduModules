@@ -13,7 +13,7 @@ BINDU::Win32Window::Win32Window(HINSTANCE hInstance) : m_applicationInstanceHand
 	m_window = this;
 }
 
-BINDU::Win32Window::Win32Window(HINSTANCE hInstance, const BINDU_WINDOW_DESC windowDesc) : m_applicationInstanceHandle(hInstance),
+BINDU::Win32Window::Win32Window(HINSTANCE hInstance, const BINDU_WINDOW_DESC& windowDesc) : m_applicationInstanceHandle(hInstance),
 															m_windowTitle(windowDesc.windowTitle),
 															m_windowWidth(windowDesc.windowWidth),
 															m_windowHeight(windowDesc.windowHeight)

@@ -23,13 +23,13 @@
     <ClInclude Include="Include\GeometryGenerator.h" />
     <ClInclude Include="Include\MathHelper.h" />
     <ClInclude Include="Include\ObjLoader.h" />
-    <ClInclude Include="Include\Timer.h" />
+    <ClInclude Include="Include\Bindu_Timer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\Bindu_Util.cpp" />
     <ClCompile Include="Src\GeometryGenerator.cpp" />
     <ClCompile Include="Src\ObjLoader.cpp" />
-    <ClCompile Include="Src\Timer.cpp" />
+    <ClCompile Include="Src\Bindu_Timer.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

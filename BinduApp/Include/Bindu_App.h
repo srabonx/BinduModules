@@ -8,16 +8,17 @@ namespace BINDU
 	public:
 		BinduApp();
 
-		virtual ~BinduApp();
+		virtual ~BinduApp() = default;
 
-		virtual bool OnInit();
+		virtual bool OnInit() = 0;
 		virtual void Run();
-		virtual bool OnDestroy();
+		virtual bool OnDestroy() = 0;
 
-		virtual bool CalculateFrameStats(int& fps, float& mspf, float totalTime);	// Returns fps = frames per second, mspf = milliseconds per frame
+		// Returns fps = frames per second, mspf = milliseconds per frame 
+		// Returns true if a second has passed
+		virtual bool CalculateFrameStats(int& fps, float& mspf, float totalTime);	
 
 		// Accessor/ Mutator functions
-
 		inline bool isPaused() { return m_appPaused; }
 
 		
@@ -31,6 +32,10 @@ namespace BINDU
 	protected:
 
 		bool	m_appPaused{ false };
+
+	private:
+		// Only a single instance can be created
+		static BinduApp* m_appInstance;
 
 	};
 

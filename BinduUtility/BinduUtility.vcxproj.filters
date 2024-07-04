@@ -18,7 +18,7 @@
     <ClInclude Include="Include\Bindu_Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Timer.h">
+    <ClInclude Include="Include\Bindu_Timer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\MathHelper.h">
@@ -35,7 +35,7 @@
     <ClCompile Include="Src\Bindu_Util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Timer.cpp">
+    <ClCompile Include="Src\Bindu_Timer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Src\GeometryGenerator.cpp">

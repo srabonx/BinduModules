@@ -25,7 +25,7 @@ bool MultiShape::OnInit()
 	dxgiModeDesc.RefreshRate.Numerator = 60;
 	dxgiModeDesc.RefreshRate.Denominator = 1;
 
-	m_graphics = std::make_unique<BINDU::Graphics>(&m_windowHandle, dxgiModeDesc);
+	m_graphics = std::make_unique<BINDU::DX12Graphics>(&m_windowHandle, dxgiModeDesc);
 
 	m_graphics->InitDirect3D();
 	m_graphics->OnResize(m_windowWidth, m_windowHeight);
@@ -364,6 +364,11 @@ void MultiShape::BuildShadersAndInputLayout()
 	};
 }
 
+bool MultiShape::OnDestroy()
+{
+	return false;
+}
+
 void MultiShape::BuildShapeGeometry()
 {
 	GeometryGenerator geoGen;
@@ -502,6 +507,18 @@ void MultiShape::OnMouseMove(BINDU::MouseButton btn, int x, int y)
 		m_phi = MathHelper::Clamp(m_phi, 0.1f, 3.1415926535f - 0.1f);
 	}
 
+	if (btn == BINDU::RIGHT)
+	{
+		float dx = 0.05f * static_cast<float>(x - m_lastMousePos.x);
+		float dy = 0.05f * static_cast<float>(y - m_lastMousePos.y);
+
+		// Update the camera radius based on input.
+		m_radius += dx - dy;
+
+		// Restrict the radius.
+		m_radius = MathHelper::Clamp(m_radius, 5.0f, 150.0f);
+	}
+
 	m_lastMousePos.x = x;
 	m_lastMousePos.y = y;
 }
@@ -599,7 +616,7 @@ void MultiShape::OnKeyboardDown(BINDU::KeyBoardKey key, bool isDown, bool repeat
 
 void MultiShape::OnKeyboardUp(BINDU::KeyBoardKey key, bool isUp, bool repeat)
 {
-	if (key == BINDU::KeyBoardKey::A && isUp)
+	if (key == BINDU::KeyBoardKey::A)
 		m_isWireframe = false;
 
 }

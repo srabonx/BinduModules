@@ -50,13 +50,16 @@ ObjLoader::Model ObjLoader::LoadFromFile(const std::string& filepath)
         else if (strcmp(lineHeader, "f") == 0)
         {
             std::uint16_t vertexIndices[4], uvIndices[4], vertexNormal[4];
+
+
             int matches = fscanf_s(file, "%hu/%hu/%hu %hu/%hu/%hu %hu/%hu/%hu %hu/%hu/%hu\n",
                 &vertexIndices[0], &uvIndices[0], &vertexNormal[0],
                 &vertexIndices[1], &uvIndices[1], &vertexNormal[1],
                 &vertexIndices[2], &uvIndices[2], &vertexNormal[2],
                 &vertexIndices[3], &uvIndices[3], &vertexNormal[3]);
 
-            if (matches != 12)
+
+            if (matches != 9 && matches != 12)
             {
                 std::cerr << "Faces cannot be read by this parser!" << std::endl;
                 return model;
@@ -67,25 +70,30 @@ ObjLoader::Model ObjLoader::LoadFromFile(const std::string& filepath)
             model.VertexIndices.push_back(vertexIndices[1] - 1);
             model.VertexIndices.push_back(vertexIndices[2] - 1);
 
-            model.VertexIndices.push_back(vertexIndices[0] - 1);
-            model.VertexIndices.push_back(vertexIndices[2] - 1);
-            model.VertexIndices.push_back(vertexIndices[3] - 1);
-
             model.UVIndices.push_back(uvIndices[0] - 1);
             model.UVIndices.push_back(uvIndices[1] - 1);
             model.UVIndices.push_back(uvIndices[2] - 1);
-
-            model.UVIndices.push_back(uvIndices[0] - 1);
-            model.UVIndices.push_back(uvIndices[2] - 1);
-            model.UVIndices.push_back(uvIndices[3] - 1);
 
             model.VNormalIndices.push_back(vertexNormal[0] - 1);
             model.VNormalIndices.push_back(vertexNormal[1] - 1);
             model.VNormalIndices.push_back(vertexNormal[2] - 1);
 
-            model.VNormalIndices.push_back(vertexNormal[0] - 1);
-            model.VNormalIndices.push_back(vertexNormal[2] - 1);
-            model.VNormalIndices.push_back(vertexNormal[3] - 1);
+            if (matches == 12)
+            {
+                model.VertexIndices.push_back(vertexIndices[0] - 1);
+                model.VertexIndices.push_back(vertexIndices[2] - 1);
+                model.VertexIndices.push_back(vertexIndices[3] - 1);
+
+                model.UVIndices.push_back(uvIndices[0] - 1);
+                model.UVIndices.push_back(uvIndices[2] - 1);
+                model.UVIndices.push_back(uvIndices[3] - 1);
+
+                model.VNormalIndices.push_back(vertexNormal[0] - 1);
+                model.VNormalIndices.push_back(vertexNormal[2] - 1);
+                model.VNormalIndices.push_back(vertexNormal[3] - 1);
+
+            }
+
         }
     }
 

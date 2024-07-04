@@ -3,20 +3,29 @@
 #include "../Include/d3dx12.h"
 
 
-BINDU::Graphics::Graphics(HWND* hwnd, DXGI_MODE_DESC backBufferDisplayMode, DXGI_FORMAT backBufferFormat) : m_hwndOutputWindow(hwnd), m_backBufferFormat(backBufferFormat)
+BINDU::DX12Graphics*  BINDU::DX12Graphics::m_dx12GraphicsInstance = nullptr;
+
+BINDU::DX12Graphics::DX12Graphics(HWND* hwnd, DXGI_MODE_DESC backBufferDisplayMode, DXGI_FORMAT backBufferFormat) : m_hwndOutputWindow(hwnd), m_backBufferFormat(backBufferFormat)
 {
+	// Check to see there is only one instance of this class
+	assert(m_dx12GraphicsInstance == nullptr);
+
+	m_dx12GraphicsInstance = this;
+
+	backBufferDisplayMode.RefreshRate.Numerator = 60;
+	backBufferDisplayMode.RefreshRate.Denominator = 1;
 	backBufferDisplayMode.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 	backBufferDisplayMode.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	backBufferDisplayMode.Format = backBufferFormat;
 
-	m_dxgiModeDesc = backBufferDisplayMode;
+	m_swapchainBufferDesc = backBufferDisplayMode;
 }
 
-BINDU::Graphics::~Graphics()
+BINDU::DX12Graphics::~DX12Graphics()
 {
 }
 
-void BINDU::Graphics::InitDirect3D()
+void BINDU::DX12Graphics::InitDirect3D()
 {
 	// using this namespace for convenience.
 	using namespace Microsoft::WRL;
@@ -94,9 +103,11 @@ void BINDU::Graphics::InitDirect3D()
 
 	// Initial resize
 	this->OnResize(800, 600);
+
+	m_d3dInitialized = true;
 }
 
-void BINDU::Graphics::FlushCommandQueue()
+void BINDU::DX12Graphics::FlushCommandQueue()
 {
 	// Advance the fence value to mark commands upto this fence point
 	m_currentFence++;
@@ -119,7 +130,7 @@ void BINDU::Graphics::FlushCommandQueue()
 
 }
 
-void BINDU::Graphics::OnResize(int width, int height)
+void BINDU::DX12Graphics::OnResize(int width, int height)
 {
 	assert(m_d3dDevice);
 	assert(m_dxgiSwapChain);
@@ -132,7 +143,7 @@ void BINDU::Graphics::OnResize(int width, int height)
 
 	// Release the previous resources we will be recreating
 	for (int i = 0; i < m_swapChainBufferCount; ++i)
-		m_dxgiSwapChainBuffer[i].Reset();
+		m_dxgiSwapChainBuffers[i].Reset();
 	m_depthStencilBuffer.Reset();
 
 	// Resize the swapChain
@@ -148,8 +159,8 @@ void BINDU::Graphics::OnResize(int width, int height)
 
 	for (UINT i = 0; i < m_swapChainBufferCount; i++)
 	{
-		DX::ThrowIfFailed(m_dxgiSwapChain->GetBuffer(i, IID_PPV_ARGS(&m_dxgiSwapChainBuffer[i])));
-		m_d3dDevice->CreateRenderTargetView(m_dxgiSwapChainBuffer[i].Get(), nullptr, rtvDescriptorHandle);
+		DX::ThrowIfFailed(m_dxgiSwapChain->GetBuffer(i, IID_PPV_ARGS(&m_dxgiSwapChainBuffers[i])));
+		m_d3dDevice->CreateRenderTargetView(m_dxgiSwapChainBuffers[i].Get(), nullptr, rtvDescriptorHandle);
 		rtvDescriptorHandle.Offset(1, rtvHeapHandleSize);
 	}
 
@@ -211,7 +222,7 @@ void BINDU::Graphics::OnResize(int width, int height)
 		
 }
 
-HRESULT BINDU::Graphics::CheckMSAAQuality()
+HRESULT BINDU::DX12Graphics::CheckMSAAQuality()
 {
 	HRESULT hr = S_OK;
 
@@ -230,7 +241,7 @@ HRESULT BINDU::Graphics::CheckMSAAQuality()
 	return hr;
 }
 
-void BINDU::Graphics::LogAdapters()
+void BINDU::DX12Graphics::LogAdapters()
 {
 	IDXGIAdapter* pAdapter{ nullptr };
 	UINT i{ 0 };
@@ -276,7 +287,7 @@ void BINDU::Graphics::LogAdapters()
 	}
 }
 
-void BINDU::Graphics::LogAdapterOutputs(IDXGIAdapter* pAdapter)
+void BINDU::DX12Graphics::LogAdapterOutputs(IDXGIAdapter* pAdapter)
 {
 	
 	IDXGIOutput* pOutput{ nullptr };
@@ -311,7 +322,7 @@ void BINDU::Graphics::LogAdapterOutputs(IDXGIAdapter* pAdapter)
 	}
 }
 
-void BINDU::Graphics::LogOutputDisplayModes(IDXGIOutput* pOutput, DXGI_FORMAT backBufferFormat)
+void BINDU::DX12Graphics::LogOutputDisplayModes(IDXGIOutput* pOutput, DXGI_FORMAT backBufferFormat)
 {
 	UINT count{ 0 };
 	UINT flags{ 0 };
@@ -342,7 +353,7 @@ void BINDU::Graphics::LogOutputDisplayModes(IDXGIOutput* pOutput, DXGI_FORMAT ba
 
 }
 
-void BINDU::Graphics::CreateCommandObjects()
+void BINDU::DX12Graphics::CreateCommandObjects()
 {
 	D3D12_COMMAND_QUEUE_DESC cmdQdesc;
 	cmdQdesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
@@ -364,14 +375,14 @@ void BINDU::Graphics::CreateCommandObjects()
 	m_commandList->Close();
 }
 
-void BINDU::Graphics::CreateSwapChain()
+void BINDU::DX12Graphics::CreateSwapChain()
 {
 	// Release the previous swapchain, if any available.
 	m_dxgiSwapChain.Reset();
 
 	DXGI_SWAP_CHAIN_DESC desc = { 0 };
 	desc.BufferCount = m_swapChainBufferCount;
-	desc.BufferDesc = m_dxgiModeDesc;
+	desc.BufferDesc = m_swapchainBufferDesc;
 	desc.Windowed = true;
 	desc.SampleDesc.Count = m_4xMSAAState ? 4 : 1;
 	desc.SampleDesc.Quality = m_4xMSAAState ? (m_4xMSAAQuality - 1) : 0;
@@ -384,7 +395,7 @@ void BINDU::Graphics::CreateSwapChain()
 	DX::ThrowIfFailed(m_dxgiFactory->CreateSwapChain(m_commandQueue.Get(), &desc, &m_dxgiSwapChain));
 }
 
-void BINDU::Graphics::CreateRtvAndDsvDescriptorHeaps()
+void BINDU::DX12Graphics::CreateRtvAndDsvDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -403,7 +414,7 @@ void BINDU::Graphics::CreateRtvAndDsvDescriptorHeaps()
 	DX::ThrowIfFailed(m_d3dDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvDescriptorHeap)));
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE BINDU::Graphics::GetCurrentBackBufferView() const
+D3D12_CPU_DESCRIPTOR_HANDLE BINDU::DX12Graphics::GetCurrentBackBufferView() const
 {
 	UINT incrSize = m_d3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
@@ -411,7 +422,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE BINDU::Graphics::GetCurrentBackBufferView() const
 		m_currentBackBuffer, incrSize);
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE BINDU::Graphics::GetDepthStencilView() const
+D3D12_CPU_DESCRIPTOR_HANDLE BINDU::DX12Graphics::GetDepthStencilView() const
 {
 	return m_dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 }

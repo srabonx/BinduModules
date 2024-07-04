@@ -3,33 +3,22 @@
 #include <Windows.h>
 
 
+BINDU::BinduApp* BINDU::BinduApp::m_appInstance = nullptr;
+
+
 BINDU::BinduApp::BinduApp()
 {
-	
-}
+	assert(m_appInstance == nullptr);
 
-BINDU::BinduApp::~BinduApp()
-{
-
-}
-
-bool BINDU::BinduApp::OnInit()
-{
-
-	return true;
+	m_appInstance = this;
 }
 
 void BINDU::BinduApp::Run()
 {
-
 	Update();
 	Render();
 }
 
-bool BINDU::BinduApp::OnDestroy()
-{
-	return false;
-}
 
 bool BINDU::BinduApp::CalculateFrameStats(int& fps, float& mspf, float totalTime)
 {

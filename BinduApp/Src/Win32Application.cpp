@@ -1,4 +1,7 @@
 #include "../Include/Win32Application.h"
+#include <Bindu_Timer.h>
+#include <thread>
+#include <windows.h>
 
 int BINDU::Win32Application::Run(BinduApp* pApp, BINDU::Win32Window* pWindow, int nCmdShow)
 {
@@ -13,7 +16,7 @@ int BINDU::Win32Application::Run(BinduApp* pApp, BINDU::Win32Window* pWindow, in
 
 	while (!done)
 	{
-		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -24,16 +27,17 @@ int BINDU::Win32Application::Run(BinduApp* pApp, BINDU::Win32Window* pWindow, in
 		}
 		else
 		{
+
 			if (!pApp->isPaused())
 				pApp->Run();
-			else
-				Sleep(100);
+
 		}
+		
 	}
 
 	pApp->OnDestroy();
 
 	delete pApp;
 	
-	return (int)msg.wParam;
+	return static_cast<int>(msg.wParam);
 }

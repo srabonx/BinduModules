@@ -1,7 +1,7 @@
 #pragma once
 #include <Bindu_App.h>
 #include <Win32Window.h>
-#include <Timer.h>
+#include <Bindu_Timer.h>
 #include <Bindu_Graphics.h>
 #include <MathHelper.h>
 #include <wrl.h>
@@ -103,9 +103,10 @@ public:
 	~MultiShape();
 
 	bool	OnInit() override;
-	void	Run()	override;
+	void	Run() override;
 	void	Update() override;
 	void	Render() override;
+	bool	OnDestroy() override;
 
 	LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
 private:
@@ -135,8 +136,8 @@ private:
 	void	OnResize(UINT width, UINT height);
 
 private:
-	GameTimer	m_timer;
-	std::unique_ptr<BINDU::Graphics>	m_graphics{ nullptr };
+	BINDU::Timer	m_timer;
+	std::unique_ptr<BINDU::DX12Graphics>	m_graphics{ nullptr };
 
 	//static const int	m_numFrameResource{ 3 };
 	std::vector<std::unique_ptr<FrameResource>>	m_frameResources;

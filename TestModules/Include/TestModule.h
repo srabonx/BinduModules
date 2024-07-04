@@ -1,6 +1,6 @@
 #pragma once
 #include <Win32Application.h>
-#include <Timer.h>
+#include <Bindu_Timer.h>
 #include <Win32Window.h>
 #include <Bindu_Graphics.h>
 #include <DirectXMath.h>
@@ -58,7 +58,7 @@ public:
 	void Run() override;
 	void Update() override;
 	void Render() override;
-	
+	bool OnDestroy() override;
 
 private:
 
@@ -88,8 +88,8 @@ private:
 
 
 private:
-	GameTimer m_timer;
-	std::unique_ptr<BINDU::Graphics> m_graphics{ nullptr };
+	BINDU::Timer m_timer;
+	std::unique_ptr<BINDU::DX12Graphics> m_graphics{ nullptr };
 	
 
 	Microsoft::WRL::ComPtr<ID3D12PipelineState>		m_pso{ nullptr };

@@ -145,11 +145,13 @@
   <ItemGroup>
     <ClInclude Include="Include\MultipleShapesTest.h" />
     <ClInclude Include="Include\TestModule.h" />
+    <ClInclude Include="Include\WavesAndValleys.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\Main.cpp" />
     <ClCompile Include="Src\MultipleShapesTest.cpp" />
     <ClCompile Include="Src\TestModule.cpp" />
+    <ClCompile Include="Src\WavesAndValleys.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -147,7 +147,7 @@ struct MeshGeometry
 	UINT IndexBufferByteSize{ 0 };
 
 
-	std::unordered_map<std::string, SubmeshGeometry> DrawArgs;
+	std::unordered_map<std::string, SubmeshGeometry> Submesh;
 
 	inline D3D12_VERTEX_BUFFER_VIEW	GetVertexBufferView() const
 	{

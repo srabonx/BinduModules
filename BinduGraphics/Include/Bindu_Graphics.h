@@ -17,12 +17,12 @@ namespace BINDU
 	class DX12Graphics
 	{
 	public:
-		DX12Graphics(HWND* hwnd, DXGI_MODE_DESC backBufferDisplayMode, DXGI_FORMAT backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM);
+		DX12Graphics(HWND* hwnd, DXGI_MODE_DESC& backBufferDisplayMode, DXGI_FORMAT backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM);
 		virtual ~DX12Graphics();
 
 		void	InitDirect3D();
 		void	FlushCommandQueue();
-		void	OnResize(int width, int height);
+		virtual void	OnResize(int width, int height);
 
 	
 		void	LogAdapters();
@@ -88,9 +88,6 @@ namespace BINDU
 		void	CreateRtvAndDsvDescriptorHeaps();
 
 	protected:
-
-		// Only a single instance can be made
-		static DX12Graphics* m_dx12GraphicsInstance;
 
 		// Is the Direct3D initialized?
 		bool m_d3dInitialized{ false };

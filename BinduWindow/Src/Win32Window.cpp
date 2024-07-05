@@ -5,12 +5,10 @@
 //	return BINDU::Win32Window::GetWindow()->MsgProc(hWnd, msg, wParam, lParam);
 //}
 
-BINDU::Win32Window* BINDU::Win32Window::m_window = nullptr;
 
 BINDU::Win32Window::Win32Window(HINSTANCE hInstance) : m_applicationInstanceHandle(hInstance)
 {
-	assert(m_window == nullptr);
-	m_window = this;
+
 }
 
 BINDU::Win32Window::Win32Window(HINSTANCE hInstance, const BINDU_WINDOW_DESC& windowDesc) : m_applicationInstanceHandle(hInstance),
@@ -18,8 +16,7 @@ BINDU::Win32Window::Win32Window(HINSTANCE hInstance, const BINDU_WINDOW_DESC& wi
 															m_windowWidth(windowDesc.windowWidth),
 															m_windowHeight(windowDesc.windowHeight)
 {
-	assert(m_window == nullptr);
-	m_window = this;
+
 }
 
 BINDU::Win32Window::~Win32Window()
@@ -67,7 +64,6 @@ bool BINDU::Win32Window::CreateMainWindow()
 									0,
 									m_applicationInstanceHandle,
 									0);
-
 	if (!m_windowHandle)
 	{
 		MessageBox(0, L"Failed to create window!", 0, 0);
@@ -81,21 +77,17 @@ bool BINDU::Win32Window::CreateMainWindow()
 }
 
 
-
-LRESULT BINDU::Win32Window::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT BINDU::Win32Window::WindowMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	switch (msg)
+
+	if(msg == WM_DESTROY)
 	{
-	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
 	}
+
 	
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-LRESULT BINDU::Win32Window::WindowMsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	return BINDU::Win32Window::GetWindow()->MsgProc(hWnd, msg, wParam, lParam);
-}
 

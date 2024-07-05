@@ -164,9 +164,9 @@ void DemoClass::Render()
 
 	m_graphics->GetCommandList()->SetGraphicsRootDescriptorTable(0, m_cbHeap->GetGPUDescriptorHandleForHeapStart());
 
-	m_graphics->GetCommandList()->DrawIndexedInstanced(m_boxGeo->DrawArgs["box"].IndexCount, 1, 0, 0, 0);
-//	m_graphics->GetCommandList()->DrawIndexedInstanced(m_geometry->DrawArgs["box"].IndexCount,
-//		1, m_geometry->DrawArgs["box"].StartIndexLocation, m_geometry->DrawArgs["box"].BaseVertexLocation, 0);
+	m_graphics->GetCommandList()->DrawIndexedInstanced(m_boxGeo->Submesh["box"].IndexCount, 1, 0, 0, 0);
+//	m_graphics->GetCommandList()->DrawIndexedInstanced(m_geometry->Submesh["box"].IndexCount,
+//		1, m_geometry->Submesh["box"].StartIndexLocation, m_geometry->Submesh["box"].BaseVertexLocation, 0);
 
 //	boxCBIndex = 1;
 //	objCBaddress += boxCBIndex * objCBByteSize;
@@ -175,8 +175,8 @@ void DemoClass::Render()
 
 //	m_graphics->GetCommandList()->SetGraphicsRootDescriptorTable(0, cbvHandle);
 
-//	m_graphics->GetCommandList()->DrawIndexedInstanced(m_geometry->DrawArgs["pyramid"].IndexCount,
-//		1, m_geometry->DrawArgs["pyramid"].StartIndexLocation, m_geometry->DrawArgs["pyramid"].BaseVertexLocation, 0);
+//	m_graphics->GetCommandList()->DrawIndexedInstanced(m_geometry->Submesh["pyramid"].IndexCount,
+//		1, m_geometry->Submesh["pyramid"].StartIndexLocation, m_geometry->Submesh["pyramid"].BaseVertexLocation, 0);
 
 	
 	m_graphics->GetCommandList()->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_graphics->GetCurrentBackBuffer(),
@@ -566,7 +566,7 @@ void DemoClass::CreateBoxGeometry()
 	subMesh.StartIndexLocation = 0;
 	subMesh.BaseVertexLocation = 0;
 
-	m_boxGeo->DrawArgs["box"] = subMesh;
+	m_boxGeo->Submesh["box"] = subMesh;
 
 
 	std::array<Vertex, 5>	pyraVertices =
@@ -617,7 +617,7 @@ void DemoClass::CreateBoxGeometry()
 	subMesh.BaseVertexLocation = 0;
 	subMesh.StartIndexLocation = 0;
 
-	m_pyramidGeo->DrawArgs["pyramid"] = subMesh;
+	m_pyramidGeo->Submesh["pyramid"] = subMesh;
 
 
 
@@ -703,14 +703,14 @@ void DemoClass::CreateBoxGeometry()
 	boxGeo.IndexCount = 36;
 	boxGeo.StartIndexLocation = 0;
 
-	m_geometry->DrawArgs["box"] = boxGeo;
+	m_geometry->Submesh["box"] = boxGeo;
 
 	SubmeshGeometry pyramidGeo;
 	pyramidGeo.BaseVertexLocation = 8;
 	pyramidGeo.IndexCount = 18;
 	pyramidGeo.StartIndexLocation = 36;
 
-	m_geometry->DrawArgs["pyramid"] = pyramidGeo;
+	m_geometry->Submesh["pyramid"] = pyramidGeo;
 
 
 	std::array<VPosData, 8 > vPos =

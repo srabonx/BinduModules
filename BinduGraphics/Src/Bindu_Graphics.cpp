@@ -3,15 +3,9 @@
 #include "../Include/d3dx12.h"
 
 
-BINDU::DX12Graphics*  BINDU::DX12Graphics::m_dx12GraphicsInstance = nullptr;
-
-BINDU::DX12Graphics::DX12Graphics(HWND* hwnd, DXGI_MODE_DESC backBufferDisplayMode, DXGI_FORMAT backBufferFormat) : m_hwndOutputWindow(hwnd), m_backBufferFormat(backBufferFormat)
+BINDU::DX12Graphics::DX12Graphics(HWND* hwnd, DXGI_MODE_DESC& backBufferDisplayMode, DXGI_FORMAT backBufferFormat) : m_hwndOutputWindow(hwnd), m_backBufferFormat(backBufferFormat)
 {
-	// Check to see there is only one instance of this class
-	assert(m_dx12GraphicsInstance == nullptr);
-
-	m_dx12GraphicsInstance = this;
-
+	
 	backBufferDisplayMode.RefreshRate.Numerator = 60;
 	backBufferDisplayMode.RefreshRate.Denominator = 1;
 	backBufferDisplayMode.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;

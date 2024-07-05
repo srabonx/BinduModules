@@ -28,13 +28,13 @@ inline std::string WstringToString(const std::wstring& wstr)
 #pragma warning(pop)
 
 
-inline std::string RelativeResourcePath(const char* filepath = nullptr)
+inline std::string RelativeResourcePath(const char* filepath = nullptr, const std::string& rootFolderName = "")
 {
 	std::string ResourcePath(MAX_PATH, '\0');
 
 	GetModuleFileNameA(nullptr, const_cast<LPSTR>(ResourcePath.data()), MAX_PATH);
 
-	std::string delimeter = "TestModules";
+	std::string delimeter = rootFolderName;
 
 	size_t t = ResourcePath.find(delimeter);
 	ResourcePath = ResourcePath.substr(0, t + delimeter.size() + 1);
@@ -45,7 +45,30 @@ inline std::string RelativeResourcePath(const char* filepath = nullptr)
 	return ResourcePath;
 }
 
+// Needs to be called every frame
+// Returns fps = frames per second, mspf = milliseconds per frame 
+// Returns true if a second has passed
+inline bool CalculateFrameStats(int& fps, float& mspf, float totalTime)
+{
+	static int frameCount{ 0 };
+	static float timeElapsed{ 0.0f };
 
+	frameCount++;
+
+	// Compute average over 1 second period
+	if (totalTime - timeElapsed >= 1.0f)
+	{
+		fps = frameCount;
+		mspf = 1000.0f / fps;
+
+		frameCount = 0;
+		timeElapsed += 1.0f;
+
+		return true;
+	}
+
+	return false;
+}
 
 namespace DX
 {

@@ -1,7 +1,7 @@
 //#include "../Include/MultipleShapesTest.h"
 //#include "../Include/TestModule.h"
+#include "Win32Application.h"
 #include "../Include/WavesAndValleys.h"
-#include <Win32Application.h>
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine, int cmdShow)
 {
